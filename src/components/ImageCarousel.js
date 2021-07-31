@@ -13,7 +13,7 @@ const ImageCarousel = () => {
     }
     else {
         var i = 0;
-        const carouselImages = images.images ? images.images.map(oneImage => {
+        const carouselMedia = images.media ? images.media.map(oneImage => {
             let oneGalleryImage = {};
             oneGalleryImage.filename = oneImage.filename;
             oneGalleryImage.url = getImageUrl(oneImage, bestImageFormat);
@@ -23,32 +23,19 @@ const ImageCarousel = () => {
                 oneGalleryImage.url = '';
             }
             i++;
+            if (oneImage.videoPath) {
+                oneGalleryImage.videoUrl = getVideoUrl(oneImage, 'COMPACT');
+                oneGalleryImage.contentType = oneImage.contentType;
+                return (
+                    <video key={oneGalleryImage.filename} style={{ maxWidth: '90%', maxHeight: '90vh', alignSelf: 'center' }} preload='none' controls poster={oneGalleryImage.url}>
+                        <source src={oneGalleryImage.videoUrl} type={oneGalleryImage.contentType} />
+                    </video>
+                )
+            }
             return (
                 <img key={oneGalleryImage.filename} className='gallery-image' src={oneGalleryImage.url} alt={oneGalleryImage.filename} />
             )
         }) : [];
-
-
-        const carouselVideos = images.videos ? images.videos.map(oneImage => {
-            let oneGalleryImage = {};
-            oneGalleryImage.filename = oneImage.filename;
-            oneGalleryImage.url = getImageUrl(oneImage, bestImageFormat);
-
-            var indexDiff = Math.abs(showFullSizeImageIndex - i);
-            if (indexDiff > 1) {
-                oneGalleryImage.url = '';
-            }
-            i++;
-
-            oneGalleryImage.videoUrl = getVideoUrl(oneImage, 'COMPACT');
-            oneGalleryImage.contentType = oneImage.contentType;
-            return (
-                <video key={oneGalleryImage.filename} style={{ maxWidth: '90%', maxHeight: '90vh', alignSelf: 'center' }} preload='none' controls poster={oneGalleryImage.url}>
-                    <source src={oneGalleryImage.videoUrl} type={oneGalleryImage.contentType} />
-                </video>
-            )
-        }) : [];
-
 
         var onChange = (index, item) => {
             setShowFullSizeImageIndex(index);
@@ -56,8 +43,7 @@ const ImageCarousel = () => {
 
         return (
             <Carousel selectedItem={showFullSizeImageIndex} showThumbs={false} showStatus={false} showIndicators={false} swipeable={true} emulateTouch={true} autoPlay={false} onClickItem={() => setShowFullSizeImageIndex(-1)} onChange={onChange}>
-                {carouselImages}
-                {carouselVideos}
+                {carouselMedia}
             </Carousel>
         );
     }

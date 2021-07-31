@@ -43,7 +43,7 @@ input {
 .photo-container ul {
   display: flex;
   flex-flow: row wrap;
-  justify-content: space-between;
+  justify-content: center;
   -ms-align-items: flex-start;
   align-items: flex-start;
 }
@@ -53,6 +53,7 @@ input {
   height: 165px;
   overflow: hidden;
   margin-bottom: 15px;
+  margin-left: 15px;
 }
 
 .photo-container ul img {
@@ -80,6 +81,11 @@ input {
   animation: spin 2s linear infinite;
   margin-left: auto;
   margin-right: auto;
+}
+
+.breadcrumb-box {
+  display: flex;
+  justify-content: center;
 }
 
 @keyframes spin {
