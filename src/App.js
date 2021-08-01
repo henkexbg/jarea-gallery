@@ -2,12 +2,10 @@ import React, { Component } from 'react';
 import GalleryContextProvider from './context/GalleryContext';
 import { HashRouter, Route } from 'react-router-dom';
 import ImageCarousel from './components/ImageCarousel';
-import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
+import { Divider } from '@material-ui/core';
 import 'react-tabs/style/react-tabs.css';
 import Container from './components/Container';
 import GalleryBreadcrumbs from './components/GalleryBreadcrumbs';
-
-import './App.css';
 
 class App extends Component {
 
@@ -19,18 +17,12 @@ class App extends Component {
     return (
       <GalleryContextProvider>
         <HashRouter>
-        <Route path='/:searchTerm*' >
-        <GalleryBreadcrumbs />
-        <Tabs>
-          <TabList>
-            <Tab>Gallery</Tab>
-          </TabList>
-          <TabPanel>
-            <Container></Container>
-          </TabPanel>
-          <ImageCarousel></ImageCarousel>
-        </Tabs>
-        </Route>
+          <Route path='/:searchTerm*' >
+            <GalleryBreadcrumbs />
+            <Divider />
+            <Container />
+            <ImageCarousel />
+          </Route>
         </HashRouter>
       </GalleryContextProvider>
     );
