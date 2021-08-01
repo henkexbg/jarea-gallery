@@ -9,10 +9,6 @@ import GalleryBreadcrumbs from './components/GalleryBreadcrumbs';
 
 class App extends Component {
 
-  constructor(props) {
-    super(props);
-  }
-
   render() {
     return (
       <GalleryContextProvider>

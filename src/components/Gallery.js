@@ -8,7 +8,7 @@ const Gallery = props => {
     return (<NoImages></NoImages>)
   }
   return (
-    <ul>{results}</ul>
+      <ul>{results}</ul>
   );
 };
 

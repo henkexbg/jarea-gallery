@@ -4,7 +4,8 @@ import { GALLERY_API_ROOT_URL, GALLERY_API_SERVICE_URL, GALLERY_API_SERVICE_PATH
 export const GalleryContext = createContext();
 
 const GalleryContextProvider = props => {
-  const [images, setImages] = useState([]);
+  const [media, setMedia] = useState([]);
+  const [directories, setDirectories] = useState([]);
   const [bestImageFormat, setBestImageFormat] = useState();
   const [loading, setLoading] = useState(false);
   const [showFullSizeImageIndex, setShowFullSizeImageIndex] = useState(-1);
@@ -13,7 +14,7 @@ const GalleryContextProvider = props => {
   const [username, setUsername] = useState();
   const [password, setPassword] = useState();
 
-  const authenticate = async (givenUsername, givenPassword) => {
+  const authenticate = async (givenUsername, givenPassword, failureCallback) => {
     if (JOINT_DEPLOYMENT) {
       return;
     }
@@ -33,6 +34,9 @@ const GalleryContextProvider = props => {
           setAuthenticated(true);
         } else {
           setAuthenticated(false);
+          if (failureCallback) {
+            failureCallback();
+          }
         }
       })
   }
@@ -57,7 +61,8 @@ const GalleryContextProvider = props => {
         setLoading(false);
         response.json().then(jsonResponse => {
           setBestImageFormat(determineBestImageFormatCode(jsonResponse.imageFormats));
-          setImages(jsonResponse);
+          setMedia(jsonResponse.media);
+          setDirectories(jsonResponse.directories);
           let crumbs = generateBreadcrumbs(GALLERY_API_SERVICE_PATH, query);
           setBreadcrumbs(crumbs);
         })
@@ -84,7 +89,7 @@ const GalleryContextProvider = props => {
   }
 
   return (
-    <GalleryContext.Provider value={{ images, loading, authenticate, runSearch, showFullSizeImageIndex, setShowFullSizeImageIndex, bestImageFormat, breadcrumbs, authenticated, getImageUrl, getVideoUrl }}>
+    <GalleryContext.Provider value={{ directories, media, loading, authenticate, runSearch, showFullSizeImageIndex, setShowFullSizeImageIndex, bestImageFormat, breadcrumbs, authenticated, getImageUrl, getVideoUrl }}>
       {props.children}
     </GalleryContext.Provider>
   );

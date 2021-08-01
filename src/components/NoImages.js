@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import PhotoLibraryIcon from '@material-ui/icons/PhotoLibrary';
 
 const NoImages = () => (

@@ -11,13 +11,13 @@ const GalleryBreadcrumbs = props => {
   let breadcrumbComponents = breadcrumbs.map((breadcrumb, i, array) => {
     if (i === array.length - 1) {
       return (
-        <Typography color='inherit'>
+        <Typography color='inherit' key={i}>
           {breadcrumb.displayName}
         </Typography>
       )
     }
     return (
-      <Link color='inherit' to={breadcrumb.path}>
+      <Link color='inherit' to={breadcrumb.path} key={i}>
         {breadcrumb.displayName}
       </Link>
     )

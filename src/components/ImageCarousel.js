@@ -1,4 +1,5 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
+import { useHistory } from 'react-router-dom'
 import { GalleryContext } from '../context/GalleryContext';
 import 'react-responsive-carousel/lib/styles/carousel.min.css'; // requires a loader
 import { Carousel } from 'react-responsive-carousel';
@@ -6,14 +7,22 @@ import './carousel.css';
 
 const ImageCarousel = () => {
 
-    const { images, showFullSizeImageIndex, setShowFullSizeImageIndex, bestImageFormat, getImageUrl, getVideoUrl } = useContext(GalleryContext);
+    const { media, showFullSizeImageIndex, setShowFullSizeImageIndex, bestImageFormat, getImageUrl, getVideoUrl } = useContext(GalleryContext);
+    const history = useHistory()
+
+    useEffect(() => {
+        return history.listen(location => {
+          if (history.action === 'POP' && showFullSizeImageIndex >= 0) {
+            setShowFullSizeImageIndex(-1);
+          }
+        })
+      });
 
     if (showFullSizeImageIndex < 0) {
         return (false);
-    }
-    else {
+    } else {
         var i = 0;
-        const carouselMedia = images.media ? images.media.map(oneImage => {
+        const carouselMedia = media ? media.map(oneImage => {
             let oneGalleryImage = {};
             oneGalleryImage.filename = oneImage.filename;
             oneGalleryImage.url = getImageUrl(oneImage, bestImageFormat);
