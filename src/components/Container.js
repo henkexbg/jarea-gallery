@@ -4,6 +4,7 @@ import ImageListItemBar from '@material-ui/core/ImageListItemBar';
 import CameraAltIcon from '@material-ui/icons/CameraAlt';
 import { useParams } from 'react-router';
 import { Link, Redirect } from 'react-router-dom';
+import LazyLoad from 'react-lazy-load';
 import { GalleryContext } from '../context/GalleryContext';
 import Gallery from './Gallery';
 import Loader from './Loader';
@@ -16,6 +17,10 @@ const Container = () => {
 
   let handleLogin = (username, password, handleFailedLogin) => {
     authenticate(username, password, handleFailedLogin);
+  }
+
+  let showImageCarousel = (imageIndex) => {
+    setShowFullSizeImageIndex(imageIndex)
   }
 
   useEffect(() => {
@@ -35,7 +40,10 @@ const Container = () => {
     return (
       <ImageListItem key={oneDir.name}>
         <Link to={oneDir.path}>
-          {oneDirImage ? <img src={oneDirImage} alt={oneDirImage.name} /> : <CameraAltIcon style={{ fontSize: 160 }}></CameraAltIcon>}
+          {oneDirImage ?
+            <LazyLoad height={300} offsetVertical={500} debounce={false} style={{ display: 'flex', justifyContent: 'center' }}>
+              <img src={oneDirImage} alt={oneDirImage.name} />
+            </LazyLoad> : <CameraAltIcon style={{ fontSize: 160 }}></CameraAltIcon>}
         </Link>
         <ImageListItemBar
           title={oneDir.name}
@@ -52,7 +60,10 @@ const Container = () => {
     let oneGalleryImageUrl = getImageUrl(oneImage, IMAGE_FORMAT_THUMBNAIL);
     return (
       <li key={oneImage.filename}>
-        <img src={oneGalleryImageUrl} alt={oneImage.filename} onClick={() => setShowFullSizeImageIndex(localImageIndex)} />
+        <LazyLoad height={70} offsetVertical={500} debounce={false} style={{ display: 'flex', justifyContent: 'center' }}>
+          {/* <img src={oneGalleryImageUrl} alt={oneImage.filename} onClick={() => setShowFullSizeImageIndex(localImageIndex)} /> */}
+          <img src={oneGalleryImageUrl} alt={oneImage.filename} onClick={() => showImageCarousel(localImageIndex)} />
+        </LazyLoad>
       </li>
     )
   }) : []

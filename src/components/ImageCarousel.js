@@ -1,22 +1,25 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom'
-import { GalleryContext } from '../context/GalleryContext';
-import 'react-responsive-carousel/lib/styles/carousel.min.css'; // requires a loader
 import { Carousel } from 'react-responsive-carousel';
+import 'react-responsive-carousel/lib/styles/carousel.min.css'; // requires a loader
+import { GalleryContext } from '../context/GalleryContext';
+import { DEFAULT_VIDEO_FORMAT } from '../api/config';
 import './carousel.css';
 
 const ImageCarousel = () => {
 
     const { media, showFullSizeImageIndex, setShowFullSizeImageIndex, bestImageFormat, getImageUrl, getVideoUrl } = useContext(GalleryContext);
     const history = useHistory()
+    const activeVideo = useRef(null);
+    const [activeVideoState, setActiveVideoState] = useState(null);
 
     useEffect(() => {
         return history.listen(location => {
-          if (history.action === 'POP' && showFullSizeImageIndex >= 0) {
-            setShowFullSizeImageIndex(-1);
-          }
+            if (history.action === 'POP' && showFullSizeImageIndex >= 0) {
+                setShowFullSizeImageIndex(-1);
+            }
         })
-      });
+    });
 
     if (showFullSizeImageIndex < 0) {
         return (false);
@@ -33,10 +36,11 @@ const ImageCarousel = () => {
             }
             i++;
             if (oneImage.videoPath) {
-                oneGalleryImage.videoUrl = getVideoUrl(oneImage, 'COMPACT');
+                let videoRef = i === showFullSizeImageIndex ? activeVideo : null;
+                oneGalleryImage.videoUrl = getVideoUrl(oneImage, DEFAULT_VIDEO_FORMAT);
                 oneGalleryImage.contentType = oneImage.contentType;
                 return (
-                    <video key={oneGalleryImage.filename} style={{ maxWidth: '90%', maxHeight: '90vh', alignSelf: 'center' }} preload='none' controls poster={oneGalleryImage.url}>
+                    <video key={oneGalleryImage.filename} ref={videoRef} style={{ maxWidth: '90%', maxHeight: '90vh', alignSelf: 'center' }} preload='none' controls poster={oneGalleryImage.url} onPlay={(v) => setPlayingVideo(v)} onClick={(e) => e.stopPropagation()}>
                         <source src={oneGalleryImage.videoUrl} type={oneGalleryImage.contentType} />
                     </video>
                 )
@@ -46,17 +50,26 @@ const ImageCarousel = () => {
             )
         }) : [];
 
-        var onChange = (index, item) => {
+        let onChange = (index, item) => {
+            let video = activeVideoState;
+            if (video && !video.paused) {
+                video.pause();
+            }
             setShowFullSizeImageIndex(index);
         };
 
+        let setPlayingVideo = (item) => {
+            setActiveVideoState(item.target);
+        }
+
         return (
-            <Carousel selectedItem={showFullSizeImageIndex} showThumbs={false} showStatus={false} showIndicators={false} swipeable={true} emulateTouch={true} autoPlay={false} onClickItem={() => setShowFullSizeImageIndex(-1)} onChange={onChange}>
+            <Carousel selectedItem={showFullSizeImageIndex} showThumbs={false} showStatus={false} showIndicators={false} swipeable={true} emulateTouch={true} autoPlay={false} interval={9999999} onClickItem={() => setShowFullSizeImageIndex(-1)} onChange={onChange}>
                 {carouselMedia}
             </Carousel>
         );
     }
 
 }
+
 
 export default ImageCarousel;

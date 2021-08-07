@@ -3,7 +3,6 @@ import GalleryContextProvider from './context/GalleryContext';
 import { HashRouter, Route } from 'react-router-dom';
 import ImageCarousel from './components/ImageCarousel';
 import { Divider } from '@material-ui/core';
-import 'react-tabs/style/react-tabs.css';
 import Container from './components/Container';
 import GalleryBreadcrumbs from './components/GalleryBreadcrumbs';
 

@@ -125,8 +125,8 @@ input {
   }
 
   .photo-container ul li {
-    width: 190px;
-    height: 190px;
+    width: 185px;
+    height: 185px;
     margin-bottom: 10px;
     margin-left: 5px;
   }
@@ -147,8 +147,8 @@ input {
   }
 
   .photo-container ul li {
-    width: 300px;
-    height: 300px;
+    width: 250px;
+    height: 250px;
     margin-bottom: 15px;
     margin-left: 15px;
   }
