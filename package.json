@@ -9,18 +9,23 @@
     "@testing-library/react": "^12.0.0",
     "@testing-library/user-event": "^13.2.1",
     "material-ui-image": "^3.3.2",
+    "mvn-artifact-download": "^6.0.0",
+    "node-fetch": "^2.6.1",
+    "node-java-maven": "^0.1.2",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-lazy-load": "^3.1.13",
     "react-responsive-carousel": "^3.2.20",
     "react-router-dom": "^5.2.0",
-    "react-scripts": "4.0.3"
+    "react-scripts": "4.0.3",
+    "unzipper": "^0.10.11"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "bundle": "npm run build && node build-script.mjs"
   },
   "eslintConfig": {
     "extends": "react-app"
@@ -37,5 +42,6 @@
       "last 1 safari version"
     ]
   },
-  "homepage": "/gallery"
+  "homepage": "/gallery",
+  "gallery-api-version": "0.8.0"
 }
