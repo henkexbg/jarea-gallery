@@ -1,8 +1,87 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# Jarea Gallery
+Responsive gallery for viewing images and videos in a secure and simple manner. Images are resized for the screen size in question, and videos are transcoded to configurable formats. All access is behind authentication, and different users and roles can be set up.
 
-## Available Scripts
+The name is derived from the underlying technologies: Java and React:
+* The back end is web application written in Java using Spring Boot framework. It's completely independent and can be deployed without any front end. Repository can be found here: https://github.com/henkexbg/gallery-api.
+* The front end (this repository) is a React application. 
 
-In the project directory, you can run:
+This repository contains scripts to build a full bundled application containing both parts, simplifying the deployment process. This bundle runs Spring Boot as a server with the React application bundled as static files, i.e. no Node instance is required during runtime.
+
+# Purpose
+To be able to safely and easily make your images and videos available to yourself and share with friends and family without having to upload them to a 3rd-party. This webapp is up and running in a few minutes and can easily be deployed either to a home server or a virtual machine somewhere in some cloud. This application is protected by default with basic authentication. Different users can be set up who can access different media. Root directories are configured, and new content can dynamically be added to these directories and be made available without any re-configuration. There is no registration process; the main use case is to share media with friends and family, and hence users and roles are explicitly curated by the owner.
+
+# Features
+- Browsing directories containing sub-directories and media as thumbnails
+- View large carousel of media
+- Serve scaled images and transcoded videos
+- Lazy loading, both for gallery and carousel
+- Requires authentication and validates that every single request is authenticated and authorized to view the requested content
+- Packaged as a simple Spring boot application that requires only Java - no database required
+- Automatically serves newly added content
+- Images are scaled ad-hoc
+- Transcoded videos are generated via a job or ad-hoc
+- Scaled and transcoded content is stored in a separate location for fast subsequent access
+- A video blacklist exists to ensure videos that fail to transcode keep hogging resources forever
+- Users are configured server-side. There is no registration
+
+# Prerequisites
+- Java 14
+- Node (tested with 14.15)
+
+# Installation
+This installation describes the process how to generate the full bundle with back end **and** front end.
+
+## Generate Bundle
+Run
+````shell
+npm run bundle
+````
+This script will:
+ - Build the React app by running `npm run build`
+ - Create a directory called `bundle`
+ - Copy the React build into `bundle/public`
+ - Download the Spring Boot Maven artefact to `bundle/gallery-api.jar`
+ - Extract the sample configuration to `bundle/config`
+
+## Configure Application
+There should now be three sample configuration files under `bundle/config`. Each of these files contains detailed instructions. The mandatory configuration is also summarised under Gallery-API: https://github.com/henkexbg/gallery-api#configuration.
+
+**Note**: It is **strongly** recommended to configure a web server in front that enforces HTTPS. Except for being general best practice, HTTPS is essential for securing basic authentication. How to achieve this is outside the scope of this application.
+
+# Run Application
+
+The program can then be run by calling
+````shell
+java -jar gallery-api.jar
+````
+There are multiple ways to run this as a background process, all of which depend on the operating system used. Google is your friend :) .
+
+The application is by default accessible on http://localhost:8080/gallery.
+
+# Developing with the App
+During development it's useful to run this project on a Node server rather than as bundles files on the Spring Boot application. To achieve this a few steps are required:
+
+##
+Configure an instance of Gallery-API to allow cross-origin requests. Ensure that the application.properties has the configuration `gallery.web.allowedOrigins=*`.
+This is required because Gallery-API and the React app will be running on different servers (at least different ports).
+
+Run Gallery-API.
+
+##
+In src/api/config.js, change as per the comments. Basically JOINT_DEPLOYMENT should be set to false, and a few other attributes should be altered. Unfortunately there's also a twist that requires different configuration for Firefox vs Chrome due to different handling of basic authentication for cross-origin requests. Again, this is documented in the file.
+
+# Other Configuration
+
+## Change Base Path From /gallery
+To use another base path, one configuration change is required in the front end and back end respectively.
+
+Front end: Edit the `homepage` attribute in `package.json` before building the app.
+
+Back end: Change `server.servlet.context-path` in `bundle/config/application.properties`.
+
+## Additional Scripts
+
+Being a stock standard React app, the normal operations work as per below.
 
 ### `npm start`
 
@@ -26,43 +105,3 @@ The build is minified and the filenames include the hashes.<br />
 Your app is ready to be deployed!
 
 See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/code-splitting
-
-### Analyzing the Bundle Size
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size
-
-### Making a Progressive Web App
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app
-
-### Advanced Configuration
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/advanced-configuration
-
-### Deployment
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/deployment
-
-### `npm run build` fails to minify
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
