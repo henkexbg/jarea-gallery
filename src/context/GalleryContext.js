@@ -1,18 +1,28 @@
-import React, { createContext, useState } from 'react';
+import React, { createContext, useState, useReducer } from 'react';
 import { GALLERY_API_ROOT_URL, GALLERY_API_SERVICE_URL, GALLERY_API_SERVICE_PATH, GALLERY_API_IMAGE_ROOT_URL, JOINT_DEPLOYMENT } from '../api/config';
 
 export const GalleryContext = createContext();
 
 const GalleryContextProvider = props => {
-  const [media, setMedia] = useState([]);
-  const [directories, setDirectories] = useState([]);
-  const [bestImageFormat, setBestImageFormat] = useState();
   const [loading, setLoading] = useState(false);
   const [showFullSizeImageIndex, setShowFullSizeImageIndex] = useState(-1);
   const [breadcrumbs, setBreadcrumbs] = useState([]);
   const [authenticated, setAuthenticated] = useState(JOINT_DEPLOYMENT);
   const [username, setUsername] = useState();
   const [password, setPassword] = useState();
+
+
+  const initialState = { media: [], directories: [], breadcrumbs: [], bestImageFormat: null }
+
+  const reducer = (state = initialState, action) => {
+    return Object.assign({}, state, {
+      media: action.payload.media,
+      directories: action.payload.directories,
+      bestImageFormat: determineBestImageFormatCode(action.payload.imageFormats),
+    })
+ }
+
+ const [state, dispatch] = useReducer(reducer, initialState);
 
   const authenticate = async (givenUsername, givenPassword, failureCallback) => {
     if (JOINT_DEPLOYMENT) {
@@ -60,11 +70,9 @@ const GalleryContextProvider = props => {
       .then(response => {
         setLoading(false);
         response.json().then(jsonResponse => {
-          setBestImageFormat(determineBestImageFormatCode(jsonResponse.imageFormats));
-          setMedia(jsonResponse.media);
-          setDirectories(jsonResponse.directories);
           let crumbs = generateBreadcrumbs(GALLERY_API_SERVICE_PATH, query);
           setBreadcrumbs(crumbs);
+          dispatch({ payload: jsonResponse });
         })
           .catch(error => {
             console.log(
@@ -89,7 +97,7 @@ const GalleryContextProvider = props => {
   }
 
   return (
-    <GalleryContext.Provider value={{ directories, media, loading, authenticate, runSearch, showFullSizeImageIndex, setShowFullSizeImageIndex, bestImageFormat, breadcrumbs, authenticated, getImageUrl, getVideoUrl }}>
+    <GalleryContext.Provider value={{ loading, authenticate, runSearch, showFullSizeImageIndex, setShowFullSizeImageIndex, breadcrumbs, authenticated, getImageUrl, getVideoUrl, state }}>
       {props.children}
     </GalleryContext.Provider>
   );

@@ -8,7 +8,7 @@ import './carousel.css';
 
 const ImageCarousel = () => {
 
-    const { media, showFullSizeImageIndex, setShowFullSizeImageIndex, bestImageFormat, getImageUrl, getVideoUrl } = useContext(GalleryContext);
+    const { showFullSizeImageIndex, setShowFullSizeImageIndex, getImageUrl, getVideoUrl, state } = useContext(GalleryContext);
     const history = useHistory()
     const activeVideo = useRef(null);
     const [activeVideoState, setActiveVideoState] = useState(null);
@@ -25,10 +25,10 @@ const ImageCarousel = () => {
         return (false);
     } else {
         var i = 0;
-        const carouselMedia = media ? media.map(oneImage => {
+        const carouselMedia = state.media ? state.media.map(oneImage => {
             let oneGalleryImage = {};
             oneGalleryImage.filename = oneImage.filename;
-            oneGalleryImage.url = getImageUrl(oneImage, bestImageFormat);
+            oneGalleryImage.url = getImageUrl(oneImage, state.bestImageFormat);
 
             var indexDiff = Math.abs(showFullSizeImageIndex - i);
             if (indexDiff > 1) {

@@ -13,7 +13,7 @@ import { IMAGE_FORMAT_THUMBNAIL, GALLERY_API_SERVICE_PATH } from '../api/config'
 
 const Container = () => {
   const { searchTerm } = useParams();
-  const { authenticate, authenticated, runSearch, media, directories, loading, setShowFullSizeImageIndex, getImageUrl } = useContext(GalleryContext);
+  const { authenticate, authenticated, runSearch, loading, setShowFullSizeImageIndex, getImageUrl, state } = useContext(GalleryContext);
 
   let handleLogin = (username, password, handleFailedLogin) => {
     authenticate(username, password, handleFailedLogin);
@@ -35,10 +35,10 @@ const Container = () => {
     return (<Redirect to={GALLERY_API_SERVICE_PATH}></Redirect>)
   }
 
-  const galleryDirectories = directories ? directories.map(oneDir => {
+  const galleryDirectories = state.directories ? state.directories.map(oneDir => {
     let oneDirImage = oneDir.image ? getImageUrl(oneDir.image, IMAGE_FORMAT_THUMBNAIL) : null;
     return (
-      <ImageListItem key={oneDir.name}>
+      <ImageListItem key={oneDir.path}>
         <Link to={oneDir.path}>
           {oneDirImage ?
             <LazyLoad height={300} offsetVertical={500} debounce={false} style={{ display: 'flex', justifyContent: 'center' }}>
@@ -54,14 +54,13 @@ const Container = () => {
 
   let imageIndex = -1;
 
-  const galleryImages = media ? media.map(oneImage => {
+  const galleryImages = state.media ? state.media.map(oneImage => {
     imageIndex++;
     let localImageIndex = imageIndex;
     let oneGalleryImageUrl = getImageUrl(oneImage, IMAGE_FORMAT_THUMBNAIL);
     return (
       <li key={oneImage.filename}>
         <LazyLoad height={70} offsetVertical={500} debounce={false} style={{ display: 'flex', justifyContent: 'center' }}>
-          {/* <img src={oneGalleryImageUrl} alt={oneImage.filename} onClick={() => setShowFullSizeImageIndex(localImageIndex)} /> */}
           <img src={oneGalleryImageUrl} alt={oneImage.filename} onClick={() => showImageCarousel(localImageIndex)} />
         </LazyLoad>
       </li>

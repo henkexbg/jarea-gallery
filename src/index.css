@@ -125,14 +125,33 @@ input {
   }
 
   .photo-container ul li {
-    width: 185px;
-    height: 185px;
+    width: 180px;
+    height: 180px;
     margin-bottom: 10px;
     margin-left: 5px;
+    margin-right: 5px;
   }
 }
 
-@media only screen and (min-width: 768px) {
+@media only screen and (min-width: 768px) and (max-width: 992px) {
+  body {
+    padding-top: 4em;
+  }
+
+  .photo-container ul {
+    width: 90%;
+  }
+
+  .photo-container ul li {
+    width: 215px;
+    height: 215px;
+    margin-bottom: 10px;
+    margin-left: 5px;
+  }
+
+}
+
+@media only screen and (min-width: 992px) {
   body {
     padding-top: 4em;
   }
@@ -143,7 +162,7 @@ input {
   }
 
   .photo-container ul {
-    width: 80%;
+    width: 85%;
   }
 
   .photo-container ul li {
