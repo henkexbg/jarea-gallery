@@ -10,6 +10,17 @@ This repository contains scripts to build a full bundled application containing 
 # Purpose
 To be able to securely and easily make your images and videos available to yourself and share with friends and family without having to upload them to a 3rd-party. This webapp is up and running in a few minutes and can easily be deployed either to a home server or a virtual machine somewhere in some cloud. This application is protected by default with basic authentication. Different users can be set up who can access different media. Root directories are configured, and new content can dynamically be added to these directories and be made available without any re-configuration. There is no registration process; the main use case is to share media with friends and family, and hence users and roles are explicitly curated by the owner.
 
+# Demo
+http://ec2-54-206-126-4.ap-southeast-2.compute.amazonaws.com/gallery/
+ - Username: `demo`
+ - Password: `demo-password`
+
+For a demo of just the REST interface, see:
+
+http://ec2-54-206-126-4.ap-southeast-2.compute.amazonaws.com/gallery/service
+
+Please note that the demo instance is not using HTTPS - this is **not** recommended for a real deployment.
+
 # Features
 - Browsing directories containing sub-directories and media as thumbnails
 - View full-size carousel of media
