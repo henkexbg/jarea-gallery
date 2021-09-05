@@ -60,7 +60,7 @@ const Container = () => {
     let oneGalleryImageUrl = getImageUrl(oneImage, IMAGE_FORMAT_THUMBNAIL);
     return (
       <li key={oneImage.filename}>
-        <LazyLoad height={70} offsetVertical={500} debounce={false} style={{ display: 'flex', justifyContent: 'center' }}>
+        <LazyLoad offsetVertical={500} debounce={false} style={{ display: 'flex', justifyContent: 'center' }}>
           <img src={oneGalleryImageUrl} alt={oneImage.filename} onClick={() => showImageCarousel(localImageIndex)} />
         </LazyLoad>
       </li>

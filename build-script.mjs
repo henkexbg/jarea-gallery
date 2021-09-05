@@ -49,19 +49,18 @@ fse.copySync(BUILD_DIR, BUNDLE_DIR_PUBLIC);
 // DOWNLOAD GALLERY-API JAR IF NOT ALREADY EXISTING
 ///////////////////////////////////////////////////////////////////////////////
 if (!fs.existsSync(GALLERY_API_JAR_FILE)) {
-  await fetch(GALLERY_API_JAR_URL)
-    .then(res => {
-      if (res.ok) { // res.status >= 200 && res.status < 300
-        return res;
-      } else {
+  await fetch(GALLERY_API_JAR_URL).then(res => new Promise((resolve, reject) => {
+      if (!res.ok) {
         console.log(`Error when downloading Gallery API from ${GALLERY_API_JAR_URL}`);
-        throw Error(res.statusText);
+        reject();
       }
-    })
-    .then(res => {
-      const dest = fs.createWriteStream(GALLERY_API_JAR_FILE);
-      res.body.pipe(dest);
-    }).catch(err => console.error(err));
+      else {
+        const dest = fs.createWriteStream(GALLERY_API_JAR_FILE);
+        res.body.pipe(dest);
+        dest.on('close', () => resolve());
+        dest.on('error', reject);
+      }
+    })).catch(err => console.error(err));
 }
 
 ///////////////////////////////////////////////////////////////////////////////

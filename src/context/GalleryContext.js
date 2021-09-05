@@ -105,8 +105,8 @@ const GalleryContextProvider = props => {
 
 function determineBestImageFormatCode(imageFormats) {
   let ratio = window.devicePixelRatio || 1;
-  let width = Math.round(window.screen.width * ratio);
-  let height = Math.round(window.screen.height * ratio);
+  let width = Math.round(window.innerWidth * ratio);
+  let height = Math.round(window.innerHeight * ratio);
   let nrPixels = width * height;
   let bestMatchPixelsDiff = Number.MAX_SAFE_INTEGER;
   let bestMatchImageFormat = null;
