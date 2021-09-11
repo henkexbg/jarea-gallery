@@ -20,7 +20,7 @@ console.log(`Building bundle. Using Gallery API version ${GALLERY_API_VERSION}`)
 // CREATE BUNDLE DIRECTORIES IF NOT EXISTING
 /////////////////////////////////////////////////////////////////////////////
 if (!fs.existsSync(BUNDLE_DIR)) {
-  fs.mkdir(BUNDLE_DIR, function (err) {
+  fs.mkdirSync(BUNDLE_DIR, function (err) {
     if (err) {
       console.log(err);
       exit(1);
@@ -30,7 +30,7 @@ if (!fs.existsSync(BUNDLE_DIR)) {
   })
 }
 if (!fs.existsSync(BUNDLE_DIR_PUBLIC)) {
-  fs.mkdir(BUNDLE_DIR_PUBLIC, function (err) {
+  await fs.mkdirSync(BUNDLE_DIR_PUBLIC, function (err) {
     if (err) {
       console.log(err);
       exit(1);
