@@ -1,28 +1,37 @@
-import React, { Component } from 'react';
-import GalleryContextProvider from './context/GalleryContext';
+import React, { useContext } from 'react';
+import {GalleryContext} from './context/GalleryContext';
 import { HashRouter, Route } from 'react-router-dom';
 import ImageCarousel from './components/ImageCarousel';
 import { Divider } from '@material-ui/core';
 import Container from './components/Container';
 import GalleryBreadcrumbs from './components/GalleryBreadcrumbs';
+import TopBar from './components/TopBar';
+import SignIn from "./components/SignIn";
 
-class App extends Component {
+const App = props => {
+    const { authenticate, authenticated } = useContext(GalleryContext);
 
-  render() {
+    let handleLogin = (username, password, handleFailedLogin) => {
+        authenticate(username, password, handleFailedLogin);
+    }
+
+    if (!authenticated) {
+      return (
+        <SignIn handleLogin={handleLogin} />
+      )
+    }
+
     return (
-      <GalleryContextProvider>
         <HashRouter>
           <Route path='/:searchTerm*' >
+            <TopBar />
             <GalleryBreadcrumbs />
             <Divider />
             <Container />
             <ImageCarousel />
           </Route>
         </HashRouter>
-      </GalleryContextProvider>
     );
-  }
 }
-
 
 export default App;

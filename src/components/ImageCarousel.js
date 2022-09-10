@@ -3,7 +3,6 @@ import { useHistory } from 'react-router-dom'
 import { Carousel } from 'react-responsive-carousel';
 import 'react-responsive-carousel/lib/styles/carousel.min.css'; // requires a loader
 import { GalleryContext } from '../context/GalleryContext';
-import { DEFAULT_VIDEO_FORMAT } from '../api/config';
 import './carousel.css';
 
 const ImageCarousel = () => {
@@ -37,7 +36,7 @@ const ImageCarousel = () => {
             i++;
             if (oneImage.videoPath) {
                 let videoRef = i === showFullSizeImageIndex ? activeVideo : null;
-                oneGalleryImage.videoUrl = getVideoUrl(oneImage, DEFAULT_VIDEO_FORMAT);
+                oneGalleryImage.videoUrl = getVideoUrl(oneImage);
                 oneGalleryImage.contentType = oneImage.contentType;
                 return (
                     <video key={oneGalleryImage.filename} ref={videoRef} style={{ maxWidth: '90%', maxHeight: '90vh', alignSelf: 'center' }} preload='none' controls poster={oneGalleryImage.url} onPlay={(v) => setPlayingVideo(v)} onClick={(e) => e.stopPropagation()}>
@@ -68,8 +67,6 @@ const ImageCarousel = () => {
             </Carousel>
         );
     }
-
 }
-
 
 export default ImageCarousel;

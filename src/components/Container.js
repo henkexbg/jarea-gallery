@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import ImageListItem from '@material-ui/core/ImageListItem';
 import ImageListItemBar from '@material-ui/core/ImageListItemBar';
 import CameraAltIcon from '@material-ui/icons/CameraAlt';
@@ -8,28 +8,20 @@ import LazyLoad from 'react-lazy-load';
 import { GalleryContext } from '../context/GalleryContext';
 import Gallery from './Gallery';
 import Loader from './Loader';
-import SignIn from './SignIn';
 import { IMAGE_FORMAT_THUMBNAIL, GALLERY_API_SERVICE_PATH } from '../api/config';
 
 const Container = () => {
   const { searchTerm } = useParams();
-  const { authenticate, authenticated, runSearch, loading, setShowFullSizeImageIndex, getImageUrl, state } = useContext(GalleryContext);
+  const { authenticated, runSearch, loading, setShowFullSizeImageIndex, getImageUrl, state } = useContext(GalleryContext);
 
-  let handleLogin = (username, password, handleFailedLogin) => {
-    authenticate(username, password, handleFailedLogin);
-  }
 
   let showImageCarousel = (imageIndex) => {
-    setShowFullSizeImageIndex(imageIndex)
+    setShowFullSizeImageIndex(imageIndex);
   }
 
   useEffect(() => {
     runSearch(searchTerm);
   }, [searchTerm, authenticated]);
-
-  if (!authenticated) {
-    return (<SignIn handleLogin={handleLogin} />)
-  }
 
   if (!searchTerm) {
     return (<Redirect to={GALLERY_API_SERVICE_PATH}></Redirect>)
@@ -67,7 +59,7 @@ const Container = () => {
     )
   }) : []
 
-  var allItems = galleryDirectories.concat(galleryImages);
+  let allItems = galleryDirectories.concat(galleryImages);
 
   return (
     <div className='photo-container'>

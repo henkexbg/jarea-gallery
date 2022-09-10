@@ -140,10 +140,6 @@ input {
 }
 
 @media only screen and (min-width: 768px) and (max-width: 992px) {
-  body {
-    padding-top: 4em;
-  }
-
   .photo-container ul {
     width: 90%;
   }
@@ -158,10 +154,6 @@ input {
 }
 
 @media only screen and (min-width: 992px) {
-  body {
-    padding-top: 4em;
-  }
-
   .container {
     max-width: 960px;
     margin: auto;

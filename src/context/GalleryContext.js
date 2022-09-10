@@ -10,15 +10,21 @@ const GalleryContextProvider = props => {
   const [authenticated, setAuthenticated] = useState(JOINT_DEPLOYMENT);
   const [username, setUsername] = useState();
   const [password, setPassword] = useState();
+  const [chosenVideoFormat, setChosenVideoFormat] = useState();
 
 
-  const initialState = { media: [], directories: [], breadcrumbs: [], bestImageFormat: null }
+  const initialState = { media: [], directories: [], breadcrumbs: [], bestImageFormat: null, videoFormats: [] }
 
   const reducer = (state = initialState, action) => {
+    if (!chosenVideoFormat) {
+      let tempFormat = action.payload.videoFormats[0];
+      setChosenVideoFormat(tempFormat);
+    }
     return Object.assign({}, state, {
       media: action.payload.media,
       directories: action.payload.directories,
       bestImageFormat: determineBestImageFormatCode(action.payload.imageFormats),
+      videoFormats: action.payload.videoFormats
     })
  }
 
@@ -90,14 +96,14 @@ const GalleryContextProvider = props => {
     return formattedBaseUrl + formattedPath;
   }
 
-  const getVideoUrl = (media, conversionFormat) => {
+  const getVideoUrl = (media) => {
     let formattedBaseUrl = GALLERY_API_IMAGE_ROOT_URL.replace('{username}', username).replace('{password}', password);
-    let formattedPath = media.videoPath.replace('{conversionFormat}', conversionFormat);
+    let formattedPath = media.videoPath.replace('{conversionFormat}', chosenVideoFormat);
     return formattedBaseUrl + formattedPath;
   }
 
   return (
-    <GalleryContext.Provider value={{ loading, authenticate, runSearch, showFullSizeImageIndex, setShowFullSizeImageIndex, breadcrumbs, authenticated, getImageUrl, getVideoUrl, state }}>
+    <GalleryContext.Provider value={{ loading, authenticate, runSearch, showFullSizeImageIndex, setShowFullSizeImageIndex, breadcrumbs, authenticated, getImageUrl, getVideoUrl, state, chosenVideoFormat, setChosenVideoFormat }}>
       {props.children}
     </GalleryContext.Provider>
   );
