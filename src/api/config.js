@@ -22,6 +22,3 @@ export const GALLERY_API_IMAGE_ROOT_URL = ''
 
 
 export const IMAGE_FORMAT_THUMBNAIL = 'thumb'
-
-// This will be made configurable in a future release
-export const DEFAULT_VIDEO_FORMAT = 'COMPACT'

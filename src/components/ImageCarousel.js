@@ -6,7 +6,6 @@ import { GalleryContext } from '../context/GalleryContext';
 import './carousel.css';
 
 const ImageCarousel = () => {
-
     const { showFullSizeImageIndex, setShowFullSizeImageIndex, getImageUrl, getVideoUrl, state } = useContext(GalleryContext);
     const history = useHistory()
     const activeVideo = useRef(null);
@@ -21,7 +20,7 @@ const ImageCarousel = () => {
     });
 
     if (showFullSizeImageIndex < 0) {
-        return (false);
+        return false;
     } else {
         var i = 0;
         const carouselMedia = state.media ? state.media.map(oneImage => {
@@ -62,7 +61,8 @@ const ImageCarousel = () => {
         }
 
         return (
-            <Carousel selectedItem={showFullSizeImageIndex} showThumbs={false} showStatus={false} showIndicators={false} swipeable={true} emulateTouch={true} autoPlay={false} interval={9999999} onClickItem={() => setShowFullSizeImageIndex(-1)} onChange={onChange}>
+            // <Carousel selectedItem={showFullSizeImageIndex} showThumbs={false} showStatus={false} showIndicators={false} swipeable={true} emulateTouch={true} autoPlay={false} interval={9999999} onClickItem={() => setShowFullSizeImageIndex(-1)} onChange={onChange}>
+            <Carousel selectedItem={showFullSizeImageIndex} showThumbs={false} showStatus={false} showIndicators={false} swipeable={true} emulateTouch={true} autoPlay={false} interval={9999999} onChange={onChange}>
                 {carouselMedia}
             </Carousel>
         );

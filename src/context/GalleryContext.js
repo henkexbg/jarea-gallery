@@ -1,19 +1,18 @@
 import React, { createContext, useState, useReducer } from 'react';
-import { GALLERY_API_ROOT_URL, GALLERY_API_SERVICE_URL, GALLERY_API_SERVICE_PATH, GALLERY_API_IMAGE_ROOT_URL, JOINT_DEPLOYMENT } from '../api/config';
+import { GALLERY_API_ROOT_URL, GALLERY_API_SERVICE_URL, GALLERY_API_IMAGE_ROOT_URL, JOINT_DEPLOYMENT } from '../api/config';
 
 export const GalleryContext = createContext();
 
 const GalleryContextProvider = props => {
   const [loading, setLoading] = useState(false);
   const [showFullSizeImageIndex, setShowFullSizeImageIndex] = useState(-1);
-  const [breadcrumbs, setBreadcrumbs] = useState([]);
   const [authenticated, setAuthenticated] = useState(JOINT_DEPLOYMENT);
   const [username, setUsername] = useState();
   const [password, setPassword] = useState();
   const [chosenVideoFormat, setChosenVideoFormat] = useState();
+  const [searchHistory] = useState(new Map());
 
-
-  const initialState = { media: [], directories: [], breadcrumbs: [], bestImageFormat: null, videoFormats: [] }
+  const initialState = { media: [], directories: [], bestImageFormat: null, videoFormats: [] }
 
   const reducer = (state = initialState, action) => {
     if (!chosenVideoFormat) {
@@ -66,28 +65,30 @@ const GalleryContextProvider = props => {
     if (!JOINT_DEPLOYMENT) {
       headers.set('Authorization', 'Basic ' + btoa(username + ':' + password));
     }
-    const baseUrl = GALLERY_API_ROOT_URL;
-    query = '/' + query;
-    const fullUrl = baseUrl + query;
-    fetch(fullUrl, {
-      method: 'GET',
-      headers: headers
-    })
-      .then(response => {
-        setLoading(false);
-        response.json().then(jsonResponse => {
-          let crumbs = generateBreadcrumbs(GALLERY_API_SERVICE_PATH, query);
-          setBreadcrumbs(crumbs);
-          dispatch({ payload: jsonResponse });
-        })
-          .catch(error => {
-            console.log(
-              'Encountered an error with fetching and parsing data',
-              error);
+    const fullUrl = GALLERY_API_ROOT_URL + query;
+    let previousJsonResponse = searchHistory.get(query);
+    if (previousJsonResponse) {
+      dispatch({ payload: previousJsonResponse });
+      setLoading(false);
+    } else {
+      fetch(fullUrl, {
+        method: 'GET',
+        headers: headers
+      })
+          .then(response => {
             setLoading(false);
+            response.json().then(jsonResponse => {
+              searchHistory.set(query, jsonResponse);
+              dispatch({payload: jsonResponse});
+            })
+                .catch(error => {
+                  console.log(
+                      'Encountered an error with fetching and parsing data',
+                      error);
+                  setLoading(false);
+                });
           });
-      });
-
+    }
   }
 
   const getImageUrl = (media, imageFormat) => {
@@ -103,7 +104,7 @@ const GalleryContextProvider = props => {
   }
 
   return (
-    <GalleryContext.Provider value={{ loading, authenticate, runSearch, showFullSizeImageIndex, setShowFullSizeImageIndex, breadcrumbs, authenticated, getImageUrl, getVideoUrl, state, chosenVideoFormat, setChosenVideoFormat }}>
+    <GalleryContext.Provider value={{ loading, authenticate, runSearch, showFullSizeImageIndex, setShowFullSizeImageIndex, authenticated, getImageUrl, getVideoUrl, state, chosenVideoFormat, setChosenVideoFormat, searchHistory }}>
       {props.children}
     </GalleryContext.Provider>
   );
@@ -125,22 +126,6 @@ function determineBestImageFormatCode(imageFormats) {
     }
   }
   return bestMatchImageFormat.code;
-}
-
-function generateBreadcrumbs(basePath, path) {
-  let breadcrumbs = [];
-  if (path) {
-    let pathParts = path.replace(basePath, '').split('/');
-    let currentPath = basePath;
-    breadcrumbs.push({ displayName: 'Root', path: currentPath });
-    pathParts.forEach(function (item) {
-      if (item && item.length > 0) {
-        currentPath += '/' + item;
-        breadcrumbs.push({ displayName: item, path: currentPath });
-      }
-    });
-  }
-  return breadcrumbs;
 }
 
 export default GalleryContextProvider;
