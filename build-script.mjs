@@ -3,12 +3,19 @@ import fse from 'fs-extra'
 import { exit } from 'process';
 import fetch from 'node-fetch';
 import unzipper from 'unzipper';
+import { readFile } from 'fs/promises';
+
+const packageJson = JSON.parse(
+    await readFile(
+        new URL('./package.json', import.meta.url)
+    )
+);
 
 const BUILD_DIR = './build';
 const BUNDLE_DIR = './bundle';
 const BUNDLE_DIR_PUBLIC = `${BUNDLE_DIR}/public`;
 const BUNDLE_DIR_CONFIG = `${BUNDLE_DIR}/config`;
-const GALLERY_API_VERSION = process.env.npm_package_gallery_api_version;
+const GALLERY_API_VERSION = packageJson.gallery_api_version;
 const GALLERY_API_JAR_URL = `https://search.maven.org/remotecontent?filepath=com/github/henkexbg/gallery-api/${GALLERY_API_VERSION}/gallery-api-${GALLERY_API_VERSION}.jar`
 const GALLERY_API_JAR_FILE = `${BUNDLE_DIR}/gallery-api.jar`;
 const TMP_UNZIPPED_JAR_DIR = `${BUNDLE_DIR}/temp`;
@@ -20,24 +27,24 @@ console.log(`Building bundle. Using Gallery API version ${GALLERY_API_VERSION}`)
 // CREATE BUNDLE DIRECTORIES IF NOT EXISTING
 /////////////////////////////////////////////////////////////////////////////
 if (!fs.existsSync(BUNDLE_DIR)) {
-  fs.mkdirSync(BUNDLE_DIR, function (err) {
-    if (err) {
-      console.log(err);
-      exit(1);
-    } else {
-      console.log(`Created ${BUNDLE_DIR}`);
-    }
-  })
+    fs.mkdirSync(BUNDLE_DIR, function (err) {
+        if (err) {
+            console.log(err);
+            exit(1);
+        } else {
+            console.log(`Created ${BUNDLE_DIR}`);
+        }
+    })
 }
 if (!fs.existsSync(BUNDLE_DIR_PUBLIC)) {
-  await fs.mkdirSync(BUNDLE_DIR_PUBLIC, function (err) {
-    if (err) {
-      console.log(err);
-      exit(1);
-    } else {
-      console.log(`Created ${BUNDLE_DIR_PUBLIC}`);
-    }
-  })
+    await fs.mkdirSync(BUNDLE_DIR_PUBLIC, function (err) {
+        if (err) {
+            console.log(err);
+            exit(1);
+        } else {
+            console.log(`Created ${BUNDLE_DIR_PUBLIC}`);
+        }
+    })
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -49,17 +56,17 @@ fse.copySync(BUILD_DIR, BUNDLE_DIR_PUBLIC);
 // DOWNLOAD GALLERY-API JAR IF NOT ALREADY EXISTING
 ///////////////////////////////////////////////////////////////////////////////
 if (!fs.existsSync(GALLERY_API_JAR_FILE)) {
-  await fetch(GALLERY_API_JAR_URL).then(res => new Promise((resolve, reject) => {
-      if (!res.ok) {
-        console.log(`Error when downloading Gallery API from ${GALLERY_API_JAR_URL}`);
-        reject();
-      }
-      else {
-        const dest = fs.createWriteStream(GALLERY_API_JAR_FILE);
-        res.body.pipe(dest);
-        dest.on('close', () => resolve());
-        dest.on('error', reject);
-      }
+    await fetch(GALLERY_API_JAR_URL).then(res => new Promise((resolve, reject) => {
+        if (!res.ok) {
+            console.log(`Error when downloading Gallery API from ${GALLERY_API_JAR_URL}`);
+            reject();
+        }
+        else {
+            const dest = fs.createWriteStream(GALLERY_API_JAR_FILE);
+            res.body.pipe(dest);
+            dest.on('close', () => resolve());
+            dest.on('error', reject);
+        }
     })).catch(err => console.error(err));
 }
 
@@ -67,31 +74,31 @@ if (!fs.existsSync(GALLERY_API_JAR_FILE)) {
 // CREATE TEMPORARY DIRECTORY TO EXTRACT JAR TO
 ///////////////////////////////////////////////////////////////////////////////
 if (!fs.existsSync(TMP_UNZIPPED_JAR_DIR)) {
-  fs.mkdirSync(TMP_UNZIPPED_JAR_DIR, function (err) {
-    if (err) {
-      console.log(err);
-      exit(1);
-    } else {
-      console.log(`Created ${TMP_UNZIPPED_JAR_DIR}`);
-    }
-  })
+    fs.mkdirSync(TMP_UNZIPPED_JAR_DIR, function (err) {
+        if (err) {
+            console.log(err);
+            exit(1);
+        } else {
+            console.log(`Created ${TMP_UNZIPPED_JAR_DIR}`);
+        }
+    })
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // UNZIP JAR
 ///////////////////////////////////////////////////////////////////////////////
 let unzipRes = () => new Promise((resolve, reject) => {
-  fs.createReadStream(GALLERY_API_JAR_FILE)
-    .pipe(unzipper.Extract({ path: TMP_UNZIPPED_JAR_DIR }))
-    .on('entry', entry => entry.autodrain())
-    .on('close', resolve)
-    .on('error', reject)
+    fs.createReadStream(GALLERY_API_JAR_FILE)
+        .pipe(unzipper.Extract({ path: TMP_UNZIPPED_JAR_DIR }))
+        .on('entry', entry => entry.autodrain())
+        .on('close', resolve)
+        .on('error', reject)
 })
 await unzipRes()
-  .catch(err => {
-    console.error(err);
-    exit(1);
-  });
+    .catch(err => {
+        console.error(err);
+        exit(1);
+    });
 
 ///////////////////////////////////////////////////////////////////////////////
 // COPY SAMPLE CONFIGURATION FROM EXTRACTED JAR INTO CONFIG DIR
