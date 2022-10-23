@@ -23,7 +23,7 @@ const App = () => {
             <Switch>
                 <Route path='/fullScreen' component={CarouselPage}>
                 </Route>
-                <Route path='/:searchTerm*' component={GalleryPage}>
+                <Route path='/:publicPath*' component={GalleryPage}>
                 </Route>
             </Switch>
         </HashRouter>

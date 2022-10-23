@@ -91,6 +91,42 @@ const GalleryContextProvider = props => {
     }
   }
 
+    const runActualSearch = (query, searchTerm) => {
+        if (!JOINT_DEPLOYMENT && !username) {
+            return;
+        }
+        setLoading(true);
+        let headers = new Headers();
+        if (!JOINT_DEPLOYMENT) {
+            headers.set('Authorization', 'Basic ' + btoa(username + ':' + password));
+        }
+        const fullPath = '/search' + query + '?searchTerm=' + searchTerm;
+        const fullUrl = GALLERY_API_ROOT_URL + fullPath;
+        let previousJsonResponse = searchHistory.get(fullPath);
+        if (previousJsonResponse) {
+            dispatch({ payload: previousJsonResponse });
+            setLoading(false);
+        } else {
+            fetch(fullUrl, {
+                method: 'GET',
+                headers: headers
+            })
+                .then(response => {
+                    setLoading(false);
+                    response.json().then(jsonResponse => {
+                        searchHistory.set(fullPath, jsonResponse);
+                        dispatch({payload: jsonResponse});
+                    })
+                        .catch(error => {
+                            console.log(
+                                'Encountered an error with fetching and parsing data',
+                                error);
+                            setLoading(false);
+                        });
+                });
+        }
+    }
+
   const getImageUrl = (media, imageFormat) => {
     let formattedBaseUrl = GALLERY_API_IMAGE_ROOT_URL.replace('{username}', username).replace('{password}', password);
     let formattedPath = media.formatPath.replace('{imageFormat}', imageFormat);
@@ -104,7 +140,7 @@ const GalleryContextProvider = props => {
   }
 
   return (
-    <GalleryContext.Provider value={{ loading, authenticate, runSearch, showFullSizeImageIndex, setShowFullSizeImageIndex, authenticated, getImageUrl, getVideoUrl, state, chosenVideoFormat, setChosenVideoFormat, searchHistory }}>
+    <GalleryContext.Provider value={{ loading, authenticate, runSearch, runActualSearch, showFullSizeImageIndex, setShowFullSizeImageIndex, authenticated, getImageUrl, getVideoUrl, state, chosenVideoFormat, setChosenVideoFormat, searchHistory }}>
       {props.children}
     </GalleryContext.Provider>
   );

@@ -41,7 +41,7 @@ input {
 }
 
 .breadcrumb-box a {
-  font-size: 1.2rem;
+  font-size: 1.25rem;
 }
 
 .photo-container {
@@ -100,6 +100,19 @@ input {
 .breadcrumb-box {
   display: flex;
   justify-content: center;
+  font-size: 1.25rem;
+}
+
+.MuiBreadcrumbs-li div {
+  color:white;
+}
+
+.MuiBreadcrumbs-li a {
+  color: gray;
+}
+
+.search-result-text {
+  margin-right: 15px;
 }
 
 @keyframes spin {
