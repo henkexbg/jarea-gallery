@@ -1,6 +1,6 @@
 {
   "name": "jarea-gallery",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "dependencies": {
     "@emotion/styled": "^11.10.4",
@@ -17,8 +17,8 @@
     "react-dom": "^17.0.2",
     "react-lazy-load": "^4.0.1",
     "react-responsive-carousel": "^3.2.20",
-    "react-router-dom": "^5.2.0",
     "react-router": "^5.2.0",
+    "react-router-dom": "^5.2.0",
     "react-scripts": "4.0.3",
     "unzipper": "^0.10.11"
   },
@@ -45,5 +45,5 @@
     ]
   },
   "homepage": "/gallery",
-  "gallery_api_version": "1.1.0"
+  "gallery_api_version": "2.0.0"
 }

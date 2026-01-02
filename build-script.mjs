@@ -37,7 +37,7 @@ if (!fs.existsSync(BUNDLE_DIR)) {
     })
 }
 if (!fs.existsSync(BUNDLE_DIR_PUBLIC)) {
-    await fs.mkdirSync(BUNDLE_DIR_PUBLIC, function (err) {
+    fs.mkdirSync(BUNDLE_DIR_PUBLIC, function (err) {
         if (err) {
             console.log(err);
             exit(1);
