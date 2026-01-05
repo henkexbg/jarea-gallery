@@ -44,7 +44,7 @@ const Container = () => {
                 <Link to={{pathname: oneDir.path}} onClick={event => linkClicked(oneDir.path)}
                       ref={oneDir.path === lastClickedElementId ? ref : null}>
                     {oneDirImage ?
-                        <LazyLoad height={300} offset={500} style={{display: 'flex', justifyContent: 'center'}}>
+                        <LazyLoad height={250} offset={500} style={{display: 'flex', justifyContent: 'center'}}>
                             <img src={oneDirImage} alt={oneDirImage.name}/>
                         </LazyLoad> : <CameraAltIcon style={{fontSize: 160}}></CameraAltIcon>}
                 </Link>
@@ -65,7 +65,7 @@ const Container = () => {
             <Link to={'/fullScreen'} onClick={event => linkClicked(oneImage.formatPath)}
                   ref={oneImage.formatPath === lastClickedElementId ? ref : null}>
                 <li key={oneImage.formatPath}>
-                    <LazyLoad height={300} offset={500} style={{display: 'flex', justifyContent: 'center'}}>
+                    <LazyLoad height={250} offset={500} style={{display: 'flex', justifyContent: 'center'}}>
                         <img src={oneGalleryImageUrl} alt={oneImage.filename}
                              onClick={() => showImageCarousel(oneImage.filename, localImageIndex)}/>
                     </LazyLoad>
