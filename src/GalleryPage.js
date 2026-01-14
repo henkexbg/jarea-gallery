@@ -1,47 +1,32 @@
-import React, {useContext, useEffect, useState} from 'react';
+import React, {useContext, useEffect} from 'react';
+import Divider from '@mui/material/Divider';
+import {useLocation, Navigate} from 'react-router-dom';
 import {GalleryContext} from './context/GalleryContext';
-import {Divider} from '@material-ui/core';
 import Container from './components/Container';
 import TopBar from './components/TopBar';
-import {useParams} from 'react-router';
-import {Redirect, useLocation} from 'react-router-dom';
 import {GALLERY_API_SERVICE_PATH} from './api/config';
 
 const GalleryPage = () => {
-    let useQuery = () => {
-        const {search} = useLocation();
-        return React.useMemo(() => new URLSearchParams(search), [search]);
-    }
-    let query = useQuery();
-    let searchTermQuery = query.get("searchTerm");
+    const location = useLocation();
+    const searchParams = new URLSearchParams(location.search);
+    const searchTermQuery = searchParams.get('searchTerm');
 
-    const {publicPath} = useParams();
-    const {authenticated,  runSearch} = useContext(GalleryContext);
-    const [currentlyRenderedSearchTerm, setCurrentlyRenderedSearchTerm] = useState(null);
+    const {runSearch} = useContext(GalleryContext);
     let fullSearchQuery = null;
-    if (publicPath) {
-        fullSearchQuery = '/' + publicPath;
-        if (searchTermQuery) {
-            fullSearchQuery = fullSearchQuery + '?searchTerm=' + searchTermQuery;
-        }
-        if (fullSearchQuery && fullSearchQuery !== currentlyRenderedSearchTerm) {
-            setCurrentlyRenderedSearchTerm(fullSearchQuery);
-        }
+    if (location.pathname && location.pathname.startsWith(GALLERY_API_SERVICE_PATH)) {
+        fullSearchQuery = `${location.pathname}${searchTermQuery ? `?searchTerm=${searchTermQuery}` : ''}`;
     }
     useEffect(() => {
         if (!fullSearchQuery) {
             return;
         }
-        if (currentlyRenderedSearchTerm) {
-            runSearch(fullSearchQuery);
-        }
-    }, [currentlyRenderedSearchTerm, authenticated]);
-
+        runSearch(fullSearchQuery);
+    }, [fullSearchQuery]);
 
     if (!fullSearchQuery || !fullSearchQuery.startsWith(GALLERY_API_SERVICE_PATH)) {
         return (
-            <Redirect to={GALLERY_API_SERVICE_PATH}/>
-        )
+            <Navigate to={GALLERY_API_SERVICE_PATH} replace/>
+        );
     }
 
     return (
@@ -51,6 +36,6 @@ const GalleryPage = () => {
             <Container/>
         </div>
     );
-}
+};
 
 export default GalleryPage;

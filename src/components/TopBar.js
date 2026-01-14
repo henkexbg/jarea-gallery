@@ -1,28 +1,25 @@
 import React, { useState, useContext } from 'react';
+import { alpha, styled } from '@mui/material/styles';
 import {
-  alpha,
   AppBar,
   Drawer,
   List,
-  ListItem,
+  ListItemButton,
   Box,
   IconButton,
   Toolbar,
-  styled,
   FormControl,
   InputLabel,
   Select,
   Divider,
   InputBase,
-} from '@material-ui/core';
-import MenuIcon from '@material-ui/icons/Menu';
-import { makeStyles } from '@material-ui/core/styles';
+  MenuItem,
+  Typography
+} from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { GalleryContext } from '../context/GalleryContext';
-import MenuItem from '@material-ui/core/MenuItem';
-import Typography from '@mui/material/Typography';
-import { useHistory } from "react-router";
-import GalleryBreadcrumbs from "./GalleryBreadcrumbs";
-
+import GalleryBreadcrumbs from './GalleryBreadcrumbs';
 
 const Search = styled('div')(({ theme }) => ({
   position: 'relative',
@@ -56,49 +53,41 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
   },
 }));
 
-const useStyles = makeStyles({
-  root: {
-    borderRadius: 12,
-    backgroundColor: 'blue'
-  }
-});
-
-
 export default function SearchAppBar() {
-  const classes = useStyles();
   const { state, chosenVideoFormat, setChosenVideoFormat } = useContext(GalleryContext);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const handleChange = function(event)  {
     setChosenVideoFormat(event.target.value);
-  }
+  };
 
   const videoFormatMenuItems = state.videoFormats ? state.videoFormats.map(oneVideoFormat => {
     return (
         <MenuItem key={oneVideoFormat} value={oneVideoFormat}>{oneVideoFormat}</MenuItem>
-    )
-  }) : []
-
-  const history = useHistory();
+    );
+  }) : [];
 
   return (
     <Box sx={{ flexGrow: 1 }}>
       <Drawer open={isDrawerOpen} onClose={() => setIsDrawerOpen(false)}>
-        <List className={classes.drawer}>
+        <List sx={{ minWidth: 260 }}>
           <Divider />
-          <ListItem button>
-            <FormControl className={classes.formControl}>
+          <ListItemButton>
+            <FormControl fullWidth>
               <InputLabel id='video-quality-select-label'>Video Quality</InputLabel>
               <Select
                   labelId='video-quality-open-select-label'
                   id='video-quality-open-select'
                   value={chosenVideoFormat}
+                  label='Video Quality'
                   onChange={handleChange}
               >
                 {videoFormatMenuItems}
               </Select>
             </FormControl>
-          </ListItem>
+          </ListItemButton>
         </List>
       </Drawer>
       <AppBar position='static'>
@@ -118,16 +107,16 @@ export default function SearchAppBar() {
               component='div'
               sx={{ flexGrow: 1, display: { xs: 'none', sm: 'block' } }}
           >
-            <GalleryBreadcrumbs></GalleryBreadcrumbs>
+            <GalleryBreadcrumbs/>
           </Typography>
           <Search>
             <StyledInputBase
                 placeholder="Search…"
                 inputProps={{ 'aria-label': 'search' }}
                 onKeyDown={event => {
-                  let searchTerm = event.target.value ? event.target.value.trim() : null;
-                  if (event.key === "Enter" && searchTerm && searchTerm.length > 0) {
-                    history.push('?searchTerm=' + searchTerm);
+                  const searchTerm = event.target.value ? event.target.value.trim() : null;
+                  if (event.key === 'Enter' && searchTerm && searchTerm.length > 0) {
+                    navigate({ pathname: location.pathname, search: `?searchTerm=${searchTerm}` });
                   }
                 }}
             />

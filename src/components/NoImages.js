@@ -1,5 +1,5 @@
 import React from 'react';
-import PhotoLibraryIcon from '@material-ui/icons/PhotoLibrary';
+import PhotoLibraryIcon from '@mui/icons-material/PhotoLibrary';
 
 const NoImages = () => (
   <div>

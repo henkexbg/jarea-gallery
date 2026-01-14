@@ -1,17 +1,14 @@
 import React from 'react';
-import {Link, useLocation} from 'react-router-dom';
-import {Box, Breadcrumbs, Typography} from '@material-ui/core';
-import {GALLERY_API_SERVICE_PATH} from "../api/config";
-import {useParams} from 'react-router';
+import { Link, useLocation, useParams } from 'react-router-dom';
+import { Box, Breadcrumbs, Typography } from '@mui/material';
+import { GALLERY_API_SERVICE_PATH } from '../api/config';
 
 const GalleryBreadcrumbs = () => {
+  const { '*': wildcardPath } = useParams();
+  const path = wildcardPath ? `/${wildcardPath}` : GALLERY_API_SERVICE_PATH;
+  const breadcrumbs = generateBreadcrumbs(GALLERY_API_SERVICE_PATH, path);
 
-  const {publicPath} = useParams();
-  let path = '/' + publicPath;
-  console.log('path: ' + path);
-  let breadcrumbs = generateBreadcrumbs(GALLERY_API_SERVICE_PATH, path);
-
-  let breadcrumbComponents = breadcrumbs.map((breadcrumb, i, array) => {
+  const breadcrumbComponents = breadcrumbs.map((breadcrumb, i, array) => {
     if (i === array.length - 1) {
       return (
         <Typography color='inherit' key={i}
@@ -22,21 +19,17 @@ const GalleryBreadcrumbs = () => {
         >
           {breadcrumb.displayName}
         </Typography>
-      )
+      );
     }
     return (
-      <Link color='inherit' to={breadcrumb.path} key={i}>
+      <Link to={breadcrumb.path} key={i}>
         {breadcrumb.displayName}
       </Link>
-    )
+    );
   });
 
-  let useQuery = () => {
-    const { search } = useLocation();
-    return React.useMemo(() => new URLSearchParams(search), [search]);
-  }
-  let query = useQuery();
-  let searchTermQuery = query.get("searchTerm");
+  const searchParams = new URLSearchParams(useLocation().search);
+  const searchTermQuery = searchParams.get('searchTerm');
 
   return (
     <Box className='breadcrumb-box'>
@@ -46,13 +39,13 @@ const GalleryBreadcrumbs = () => {
         {breadcrumbComponents}
       </Breadcrumbs>
     </Box>
-  )
-}
+  );
+};
 
 function generateBreadcrumbs(basePath, path) {
-  let breadcrumbs = [];
+  const breadcrumbs = [];
   if (path) {
-    let pathParts = path.replace(basePath, '').split('/');
+    const pathParts = path.replace(basePath, '').split('/');
     let currentPath = basePath;
     breadcrumbs.push({ displayName: 'Root', path: currentPath });
     pathParts.forEach(function (item) {
