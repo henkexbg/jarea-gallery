@@ -105,6 +105,10 @@ input {
   color:white;
 }
 
+.MuiInputBase-input {
+    color:white;
+}
+
 .MuiBreadcrumbs-li a {
   color: gray;
 }

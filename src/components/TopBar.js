@@ -1,5 +1,4 @@
-import React, { useState, useContext } from 'react';
-import { alpha, styled } from '@mui/material/styles';
+import React, { useState, useContext, useEffect } from 'react';
 import {
   AppBar,
   Drawer,
@@ -12,54 +11,30 @@ import {
   InputLabel,
   Select,
   Divider,
-  InputBase,
   MenuItem,
   Typography
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
+import TextField from '@mui/material/TextField';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { GalleryContext } from '../context/GalleryContext';
 import GalleryBreadcrumbs from './GalleryBreadcrumbs';
 
-const Search = styled('div')(({ theme }) => ({
-  position: 'relative',
-  borderRadius: theme.shape.borderRadius,
-  backgroundColor: alpha(theme.palette.common.white, 0.15),
-  '&:hover': {
-    backgroundColor: alpha(theme.palette.common.white, 0.25),
-  },
-  marginRight: 0,
-  width: '100%',
-  [theme.breakpoints.up('sm')]: {
-    marginLeft: theme.spacing(1),
-    width: 'auto',
-  },
-}));
-
-const StyledInputBase = styled(InputBase)(({ theme }) => ({
-  color: 'inherit',
-  '& .MuiInputBase-input': {
-    padding: theme.spacing(1, 1, 1, 0),
-    // vertical padding + font size from searchIcon
-    paddingLeft: `calc(1em + ${theme.spacing(4)})`,
-    transition: theme.transitions.create('width'),
-    width: '100%',
-    [theme.breakpoints.up('sm')]: {
-      width: '20ch',
-      '&:focus': {
-        width: '30ch',
-      },
-    },
-  },
-}));
-
 export default function SearchAppBar() {
   const { state, chosenVideoFormat, setChosenVideoFormat } = useContext(GalleryContext);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleChange = function(event)  {
+  // Keep local searchTerm in sync with the URL query parameter
+  useEffect(() => {
+    const params = new URLSearchParams(location.search || '');
+    const paramValue = params.get('searchTerm') || '';
+    setSearchTerm(paramValue);
+  }, [location.search]);
+
+  const handleVideoFormatChange = function(event)  {
     setChosenVideoFormat(event.target.value);
   };
 
@@ -68,6 +43,20 @@ export default function SearchAppBar() {
         <MenuItem key={oneVideoFormat} value={oneVideoFormat}>{oneVideoFormat}</MenuItem>
     );
   }) : [];
+
+  const handleSearchKeyDown = event => {
+    if (event.key === 'Enter') {
+      const trimmed = (searchTerm || '').trim();
+      const params = new URLSearchParams(location.search || '');
+      if (trimmed.length > 0) {
+        params.set('searchTerm', trimmed);
+      } else {
+        params.delete('searchTerm');
+      }
+      const newSearch = params.toString();
+      navigate({ pathname: location.pathname, search: newSearch ? `?${newSearch}` : '' });
+    }
+  };
 
   return (
     <Box sx={{ flexGrow: 1 }}>
@@ -82,7 +71,8 @@ export default function SearchAppBar() {
                   id='video-quality-open-select'
                   value={chosenVideoFormat}
                   label='Video Quality'
-                  onChange={handleChange}
+                  onChange={handleVideoFormatChange}
+                  variant='standard'
               >
                 {videoFormatMenuItems}
               </Select>
@@ -109,18 +99,28 @@ export default function SearchAppBar() {
           >
             <GalleryBreadcrumbs/>
           </Typography>
-          <Search>
-            <StyledInputBase
-                placeholder="Search…"
-                inputProps={{ 'aria-label': 'search' }}
-                onKeyDown={event => {
-                  const searchTerm = event.target.value ? event.target.value.trim() : null;
-                  if (event.key === 'Enter' && searchTerm && searchTerm.length > 0) {
-                    navigate({ pathname: location.pathname, search: `?searchTerm=${searchTerm}` });
-                  }
-                }}
+            <TextField
+              id="searchTermField"
+              label="Search"
+              variant="outlined"
+              sx={{
+                input: { color: 'white' },
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': { borderColor: 'white' },
+                  '&:hover fieldset': { borderColor: 'white' },
+                  '&.Mui-focused fieldset': { borderColor: 'white' }
+                }
+              }}
+              InputLabelProps={{
+                sx: {
+                  color: 'lightgray',
+                  '&.Mui-focused': { color: 'lightgray' }
+                }
+              }}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
             />
-          </Search>
         </Toolbar>
       </AppBar>
     </Box>
