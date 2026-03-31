@@ -11,7 +11,7 @@ const packageJson = JSON.parse(
     )
 );
 
-const BUILD_DIR = './build';
+const BUILD_DIR = './dist';
 const BUNDLE_DIR = './bundle';
 const BUNDLE_DIR_PUBLIC = `${BUNDLE_DIR}/public`;
 const BUNDLE_DIR_CONFIG = `${BUNDLE_DIR}/config`;
