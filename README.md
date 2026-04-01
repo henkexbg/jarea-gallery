@@ -1,32 +1,49 @@
 # Jarea Gallery
-Responsive gallery for viewing images and videos in a secure and simple manner. Images are resized for the screen size in question, and videos are transcoded to configurable formats. All access is behind authentication, and different users and roles can be set up.
+
+Responsive gallery for browsing, searching for and viewing media in a secure and simple manner. Images are resized for
+the screen size in question, and videos are transcoded to configurable formats. All access is behind authentication, and
+different users and roles can be set up. The files are made searchable based on their names and metadata.
 
 The name is derived from the underlying technologies: Java and React:
-* The back end is REST application written in Java using Spring Boot framework. It's completely independent and can be deployed without any front end. Repository can be found here: https://github.com/henkexbg/gallery-api
+
+* The back end is REST application written in Java using Spring Boot framework. It's completely independent and can be
+  deployed without any front end. Repository can be found here: https://github.com/henkexbg/gallery-api
 * The front end (this repository) is a React application
 
-This repository contains scripts to build a full bundled application containing both parts, simplifying the deployment process. This bundle runs Spring Boot as a server with the React application bundled as static files, i.e. no Node instance is required during runtime.
+This repository contains scripts to build a full bundled application containing both parts, simplifying the deployment
+process. This bundle runs Spring Boot as a server with the React application bundled as static files, i.e. no Node
+instance is required during runtime.
 
 # Purpose
-To be able to safely and easily make your images and videos available to yourself and share with friends and family without having to upload them to a 3rd-party. This webapp is up and running in a few minutes and can easily be deployed either to a home server or a virtual machine somewhere in some cloud. This application is protected by default with basic authentication. Different users can be set up who can access different media. There is no registration process; the main use case is for somebody to share media with friends and family, and hence users and roles are explicitly curated by the owner.
+
+To be able to safely and easily make your images and videos available to yourself and share with friends and family
+without having to upload them to a 3rd-party. This webapp is up and running in a few minutes and can easily be deployed
+either to a home server or a virtual machine somewhere in some cloud. All access is authenticated and authorized.
+Different users can be set up who can access different media. There is no registration process; the main use case is for
+somebody to share media with friends and family, and hence users and roles are explicitly curated by the owner.
 
 # Features
+
 - Allows fast navigation, searching and viewing of images and videos
 - View full-size carousel of media
 - Lazy loading, both for gallery and carousel
 - Automatically indexes and serves new content
 - Images are automatically resized, and videos are automatically transcoded
 - Searchable data is extracted from:
-- - Image location, which uses an internal database derived from https://download.geonames.org/, completely within app
-- - Filenames, which are tokenized and made searchable. Media inherit the searchability of their directories
-- - Image metadata
-- Completely private. Requires authentication and validates that every single request is authenticated and authorized to view the requested content
+-
+    - Image location, which uses an internal database derived from https://download.geonames.org/, completely within app
+-
+    - Filenames, which are tokenized and made searchable. Media inherit the searchability of their directories
+-
+    - Image metadata
+- Completely private. Every single request is authenticated and authorized
 - No external dependencies - every request is made only to the app
 - Packaged as a simple Spring boot application that also hosts the front end
 - A video blacklist exists to ensure videos that fail to transcode keep hogging resources forever
 - Users are configured server-side. There is no registration
 
 # Prerequisites
+
 - Java 24
 - ffmpeg - for video transpilation
 - exiftool - for extracting metadata from images
@@ -34,51 +51,85 @@ To be able to safely and easily make your images and videos available to yoursel
 - Node (tested with 18.19). Not required during runtime, only during build
 
 # Installation
+
 This installation describes the process how to generate the full bundle with back end **and** front end.
 Configure the environment variable `GALLERY_API_BASE_URL` in the `.env` file. This is needed for the React app to know
-the URL of the backend. This needs to be configured even if the backend is bundled together with the React app, which is
-not a requirement. The default value is `http://localhost:8080`, which is appropriate for development.
+the URL of the backend. This needs to be configured even if the backend is bundled together with the React app (which is
+not a requirement - the back and front ends can be deployed separately). The default value is `http://localhost:8080`,
+which is appropriate for development.
 
 ## Generate Bundle
+
 Run
+
 ````shell
 npm run bundle
 ````
+
 This script will:
- - Build the React app by running `npm run build`
- - Create a directory called `bundle`
- - Copy the React build into `bundle/public`
- - Download the Spring Boot Maven artefact to `bundle/gallery-api.jar`
- - Extract the sample configuration to `bundle/config`
+
+- Build the React app by running `npm run build`
+- Create a directory called `bundle`
+- Copy the React build into `bundle/public`
+- Download the Spring Boot Maven artefact to `bundle/gallery-api.jar`
+- Extract the sample configuration to `bundle/config`
 
 ## Configure Application
-There should now be three sample configuration files under `bundle/config`. Each of these files contains detailed instructions. The mandatory configuration is also summarised under Gallery-API: https://github.com/henkexbg/gallery-api#configuration.
 
-**Note**: It is **strongly** recommended to configure a web server in front that enforces HTTPS. Except for being general best practice, HTTPS is essential for securing basic authentication. How to achieve this is outside the scope of this application.
+There should now be three sample configuration files under `bundle/config`. Each of these files contains detailed
+instructions. The mandatory configuration is also summarised under
+Gallery-API: https://github.com/henkexbg/gallery-api#configuration.
+
+**Note**: It is **strongly** recommended to configure a web server in front that enforces HTTPS. Except for being
+general best practice, HTTPS is essential for securing basic authentication. How to achieve this is outside the scope of
+this application.
 
 # Run Application
 
 The program can then be run by calling
+
 ````shell
 java -jar gallery-api.jar
 ````
-There are multiple ways to run this as a background process, all of which depend on the operating system used. Google is your friend :) .
+
+There are multiple ways to run this as a background process, all of which depend on the operating system used. Google is
+your friend :) .
 
 The application is by default accessible on http://localhost:8080/gallery.
 
+# Load the DB With Location Data
+
+## Authenticate
+Authentication is performed **either** by using normal basic auth headers, **or** by calling the login endpoint:
+`POST https://HOST:PORT/gallery/login` with content-type: `application/x-www-form-urlencoded` and `username` and `password` parameters set.
+
+The user will then need to pass the session cookies on subsequent requests.
+
+## Load the DB With Location Data
+The location data in the database is initially empty. While customizable, the simplest way to populate it is to call:
+* `POST https://HOST:PORT/gallery/admin/db/locations` with an admin user.
+
+This call will download the full CSV from GeoNames, parse it and load the relevant fields into the database. It will take a while as it's around 13 million rows.
+
+
 # Developing with the App
-During development it's useful to run the front end project on a Node server rather than as bundles files on the Spring Boot application. To achieve this a few steps are required, see subsections below.
+
+During development it's useful to run the front end project on a Node server rather than as bundles files on the Spring
+Boot application. To achieve this a few steps are required, see subsections below.
 
 ## Back End Setup For Development
+
 Configure an instance of Gallery-API to allow cross-origin requests. Ensure that the application.properties has the
-configuration `gallery.web.crossOrigin.allowedHosts=example.com,localhost`. The default is empty value which means
-that cross-origin requests are not allowed. As long as the host is declared, all ports for that host will be allowed.
+configuration `gallery.web.crossOrigin.allowedHosts=` contains the host that the React app is run from, which is most
+likely localhost. The default is empty value which means that cross-origin requests are not allowed. As long as the host
+is declared, all ports for that host will be allowed.
 
 You can now start Gallery-API.
 
 ## Front End Setup For Development
 
 The `.env` file needs to be configured with the correct base URL. Then run
+
 ````shell
 npm run dev
 ````
@@ -89,8 +140,13 @@ browser.
 # Other Configuration
 
 ## Gallery-API Version
-Gallery-API version is controlled by `gallery_api_version` in `package.json`. Only released versions can be packaged automatically with the bundle script. Of course it's always possible to build your own JAR from source and use that instead.
+
+Gallery-API version is controlled by `gallery_api_version` in `package.json`. Only released versions can be packaged
+automatically with the bundle script. Of course it's always possible to build your own JAR from source and use that
+instead.
 
 # Acknowledgements
 
-GeoNames (https://download.geonames.org/) is implicitly used. While not distributed with this software, it does download and use data from GeoNames. The license is Creative Commons Attribution 4.0: https://creativecommons.org/licenses/by/4.0/.
+GeoNames (https://download.geonames.org/) is implicitly used. While not distributed with this software, it does download
+and use data from GeoNames. The license is Creative Commons Attribution
+4.0: https://creativecommons.org/licenses/by/4.0/.
