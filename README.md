@@ -45,7 +45,7 @@ somebody to share media with friends and family, and hence users and roles are e
 # Prerequisites
 
 - Java 24
-- ffmpeg - for video transpilation
+- ffmpeg - for video transcoding
 - exiftool - for extracting metadata from images
 - ImageMagick is required if the ImageMagick resizing method is chosen
 - Node (tested with 18.19). Not required during runtime, only during build
@@ -101,7 +101,8 @@ The application is by default accessible on http://localhost:8080/gallery.
 
 ## Authenticate
 Authentication is performed **either** by using normal basic auth headers, **or** by calling the login endpoint:
-`POST https://HOST:PORT/gallery/login` with content-type: `application/x-www-form-urlencoded` and `username` and `password` parameters set.
+`POST https://HOST:PORT/gallery/login` with content-type: `application/x-www-form-urlencoded` and `username` and
+`password` parameters set.
 
 The user will then need to pass the session cookies on subsequent requests.
 
@@ -109,7 +110,8 @@ The user will then need to pass the session cookies on subsequent requests.
 The location data in the database is initially empty. While customizable, the simplest way to populate it is to call:
 * `POST https://HOST:PORT/gallery/admin/db/locations` with an admin user.
 
-This call will download the full CSV from GeoNames, parse it and load the relevant fields into the database. It will take a while as it's around 13 million rows.
+This call will download the full CSV from GeoNames, parse it and load the relevant fields into the database. It will
+take a while as it's around 13 million rows.
 
 
 # Developing with the App
