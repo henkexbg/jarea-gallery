@@ -4,6 +4,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 const SERVICE_ROOT_PATH = "/gallery/service";
 const LOGIN_URL = `${GALLERY_API_BASE_URL}/gallery/login`;
 const LOGOUT_URL = `${GALLERY_API_BASE_URL}/gallery/logout`;
+const USER_URL = `${GALLERY_API_BASE_URL}/gallery/user`;
+const ADMIN_LOCATIONS_URL = `${GALLERY_API_BASE_URL}/gallery/admin/db/locations`;
 
 type DirectoryDto = {
   name: string;
@@ -33,6 +35,11 @@ type ServiceResponse = {
   imageFormats: ImageFormatDto[];
 };
 
+type UserResponse = {
+  username: string;
+  roles: string[];
+};
+
 type DirectoryNode = {
   kind: "directory";
   name: string;
@@ -48,6 +55,7 @@ type MediaNode = {
   thumbUrl: string;
   formatPath: string;
   contentType: string;
+  dateTaken: string;
   videoPath?: string;
 };
 
@@ -358,6 +366,11 @@ export const App: React.FC = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<UserResponse | null>(null);
+
+  const [locationsFileUri, setLocationsFileUri] = useState("");
+  const [isLoadingLocations, setIsLoadingLocations] = useState(false);
+  const [locationsStatus, setLocationsStatus] = useState<string | null>(null);
 
   const [directories, setDirectories] = useState<DirectoryNode[]>([]);
   const [mediaItems, setMediaItems] = useState<MediaNode[]>([]);
@@ -393,6 +406,9 @@ export const App: React.FC = () => {
     return params.get("sortOrder") === "ASC" ? "ASC" : "DESC";
   }, [location.search]);
   
+  const isConfigPage = location.pathname === "/configuration";
+  const isAdmin = (currentUser?.roles ?? []).includes("ROLE_ADMIN");
+
   const effectivePath = location.pathname === "/" ? SERVICE_ROOT_PATH : location.pathname;
 
   const carouselIndex = useMemo(() => {
@@ -417,15 +433,74 @@ export const App: React.FC = () => {
 
   const closeContextMenu = () => setContextMenu(null);
 
+  const handleBrandClick = () => {
+    setIsMenuOpen(false);
+    const params = new URLSearchParams(location.search);
+    params.delete("carousel");
+    params.delete("searchTerm");
+    navigate({ pathname: SERVICE_ROOT_PATH, search: params.toString() });
+  };
+
   const redirectToLogin = (message?: string) => {
     setIsMenuOpen(false);
     setAuthError(message ?? "Please log in to access your gallery.");
     setView("login");
+    setCurrentUser(null);
     setDirectories([]);
     setMediaItems([]);
     setVideoFormats([]);
     setSelectedVideoFormat(null);
     navigate("/", { replace: true });
+  };
+
+  const loadCurrentUser = async () => {
+    const response = await fetchWithAuth(USER_URL, undefined);
+    if (response.status === 401) {
+      return null;
+    }
+    if (!response.ok) {
+      return null;
+    }
+
+    const data: UserResponse = await response.json();
+    if (!data || typeof data.username !== "string" || !Array.isArray(data.roles)) {
+      return null;
+    }
+    setCurrentUser(data);
+    return data;
+  };
+
+  const handleLoadLocations = async () => {
+    try {
+      setLocationsStatus(null);
+      setIsLoadingLocations(true);
+
+      const trimmed = locationsFileUri.trim();
+      const url =
+        trimmed.length > 0
+          ? `${ADMIN_LOCATIONS_URL}?fileUri=${encodeURIComponent(trimmed)}`
+          : ADMIN_LOCATIONS_URL;
+
+      const response = await fetchWithAuth(url, {
+        method: "POST"
+      });
+
+      if (response.status === 401) {
+        return;
+      }
+
+      if (!response.ok) {
+        setLocationsStatus("Failed to load locations.");
+        return;
+      }
+
+      setLocationsStatus("Locations loaded.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      setLocationsStatus(`Network error while loading locations: ${message}`);
+    } finally {
+      setIsLoadingLocations(false);
+    }
   };
 
   const fetchWithAuth = async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -572,7 +647,8 @@ export const App: React.FC = () => {
         (item) =>
           typeof item?.contentType === "string" &&
           typeof item?.formatPath === "string" &&
-          typeof item?.filename === "string"
+          typeof item?.filename === "string" &&
+          typeof item?.dateTaken === "string"
       )
       .map((item) => {
         const isVideo = item.contentType.startsWith("video/");
@@ -588,6 +664,7 @@ export const App: React.FC = () => {
           thumbUrl,
           formatPath: item.formatPath,
           contentType: item.contentType,
+          dateTaken: item.dateTaken,
           videoPath: item.videoPath
         };
       });
@@ -699,6 +776,7 @@ export const App: React.FC = () => {
 
       setAuthError(null);
       setLoginError(null);
+      await loadCurrentUser();
       setView("gallery");
       navigate(SERVICE_ROOT_PATH, { replace: true });
       setDirectories([]);
@@ -718,6 +796,70 @@ export const App: React.FC = () => {
   const filteredMedia = useMemo(() => {
     return mediaItems;
   }, [mediaItems]);
+
+  const openDirectory = (dir: DirectoryNode) => {
+    const params = new URLSearchParams(location.search);
+    params.delete("carousel");
+    params.delete("searchTerm");
+    navigate({ pathname: dir.path, search: params.toString() });
+  };
+
+  const openMedia = (mediaIndex: number) => {
+    if (mediaIndex >= 0 && mediaIndex < mediaItems.length) {
+      setCarouselParam(mediaIndex, false);
+    }
+  };
+
+  const groupedMediaGridItems = useMemo(() => {
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      month: "long",
+      year: "numeric"
+    });
+
+    const getMonthKey = (dateTaken: string) => {
+      const d = new Date(dateTaken);
+      if (!Number.isFinite(d.getTime())) return null;
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    };
+
+    const getMonthLabel = (dateTaken: string) => {
+      const d = new Date(dateTaken);
+      if (!Number.isFinite(d.getTime())) return null;
+      return formatter.format(d);
+    };
+
+    const nodes: React.ReactNode[] = [];
+    let lastMonthKey: string | null = null;
+
+    for (const media of filteredMedia) {
+      const monthKey = getMonthKey(media.dateTaken);
+      if (monthKey && monthKey !== lastMonthKey) {
+        const label = getMonthLabel(media.dateTaken);
+        if (label) {
+          nodes.push(
+            <div key={`month-${monthKey}`} className="month-header">
+              {label}
+            </div>
+          );
+        }
+        lastMonthKey = monthKey;
+      }
+
+      const mediaIndex = mediaItems.indexOf(media);
+      nodes.push(
+        <ThumbnailCard
+          key={`${media.formatPath}-${media.name}`}
+          node={media}
+          mediaIndex={mediaIndex}
+          onOpenDirectory={openDirectory}
+          onOpenMedia={openMedia}
+          onOpenMediaContextMenu={openMediaContextMenu}
+        />
+      );
+    }
+
+    return nodes;
+  }, [filteredMedia, mediaItems, openDirectory, openMedia, openMediaContextMenu]);
 
   const breadcrumbs = useMemo(() => {
     const segments: { name: string; path: string }[] = [];
@@ -753,19 +895,6 @@ export const App: React.FC = () => {
     return segments;
   }, [effectivePath, committedSearchTerm]);
 
-  const openDirectory = (dir: DirectoryNode) => {
-    const params = new URLSearchParams(location.search);
-    params.delete("carousel");
-    params.delete("searchTerm");
-    navigate({ pathname: dir.path, search: params.toString() });
-  };
-
-  const openMedia = (mediaIndex: number) => {
-    if (mediaIndex >= 0 && mediaIndex < mediaItems.length) {
-      setCarouselParam(mediaIndex, false);
-    }
-  };
-
   const handleBreadcrumbClick = (path: string, keepSearchTerm: boolean) => {
     const params = new URLSearchParams(location.search);
     params.delete("carousel");
@@ -799,6 +928,7 @@ export const App: React.FC = () => {
       setIsMenuOpen(false);
       setAuthError("Please log in to access your gallery.");
       setView("login");
+      setCurrentUser(null);
       setDirectories([]);
       setMediaItems([]);
       setVideoFormats([]);
@@ -817,8 +947,14 @@ export const App: React.FC = () => {
   return (
     <div className="app-shell">
       <header className="app-header">
-        <div className="brand">Jarea Gallery</div>
-        {view === "gallery" && (
+        {view === "gallery" ? (
+          <button type="button" className="brand" onClick={handleBrandClick}>
+            Jarea Gallery
+          </button>
+        ) : (
+          <div className="brand">Jarea Gallery</div>
+        )}
+        {view === "gallery" && !isConfigPage && (
           <div className="search-container">
             <input
               type="search"
@@ -875,6 +1011,19 @@ export const App: React.FC = () => {
             </button>
             {isMenuOpen && (
               <div className="menu-dropdown" role="menu">
+                {isAdmin && (
+                  <button
+                    type="button"
+                    className="menu-item"
+                    role="menuitem"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      navigate("/configuration");
+                    }}
+                  >
+                    Configuration
+                  </button>
+                )}
                 {videoFormats.length > 0 && (
                   <label className="menu-field">
                     <div className="menu-label">Video quality</div>
@@ -951,98 +1100,127 @@ export const App: React.FC = () => {
           <>
             {directoryError && <div className="error-banner">{directoryError}</div>}
 
-            {breadcrumbs.length > 0 && (
-              <nav className="breadcrumbs">
-                {breadcrumbs.map((crumb, idx) => {
-                  const isLast = idx === breadcrumbs.length - 1;
-                  const isSearchCrumb =
-                    isLast && committedSearchTerm.trim().length > 0 && crumb.name.startsWith("Search:");
-                  return (
-                    <button
-                      key={crumb.path}
-                      className={`crumb ${isLast ? "active" : ""}`}
-                      onClick={() => handleBreadcrumbClick(crumb.path, isSearchCrumb)}
-                      disabled={isLast}
-                    >
-                      {crumb.name}
-                    </button>
-                  );
-                })}
-              </nav>
-            )}
-
-            <section className="gallery-section">
-              {isLoadingDirectory && (
-                <div className="loading-state">Loading items…</div>
-              )}
-              {!isLoadingDirectory && hasNoItems && (
-                <div className="empty-state">
-                  <div className="empty-title">No items found</div>
-                  <div className="empty-subtitle">
-                    Try a different search term or navigate to another folder.
-                  </div>
+            {isConfigPage ? (
+              <section className="gallery-section">
+                <div className="section-header">
+                  <div className="section-title">Configuration</div>
                 </div>
-              )}
-              {!isLoadingDirectory && !hasNoItems && (
-                <>
-                  {filteredDirectories.length > 0 && (
-                    <section className="gallery-subsection">
-                      <div className="section-header">
-                        <div className="section-title">Directories</div>
-                        {filteredDirectories.length > Math.max(directoriesColumns, 1) && (
-                          <button
-                            type="button"
-                            className="section-toggle"
-                            onClick={() => setIsDirectoriesExpanded((v) => !v)}
-                          >
-                            {isDirectoriesExpanded
-                              ? "Show less"
-                              : `Show all (${filteredDirectories.length})`}
-                          </button>
-                        )}
-                      </div>
-                      <div className="grid" ref={directoriesGridRef}>
-                        {(isDirectoriesExpanded
-                          ? filteredDirectories
-                          : filteredDirectories.slice(0, Math.max(directoriesColumns, 1))
-                        ).map((dir) => (
-                          <ThumbnailCard
-                            key={dir.path}
-                            node={dir}
-                            onOpenDirectory={openDirectory}
-                            onOpenMedia={openMedia}
-                            onOpenMediaContextMenu={openMediaContextMenu}
-                          />
-                        ))}
-                      </div>
-                    </section>
+
+                <div className="gallery-subsection">
+                  <div className="section-header">
+                    <div className="section-title">Load Locations</div>
+                  </div>
+
+                  {locationsStatus && (
+                    <div className={locationsStatus === "Locations loaded." ? "info-banner" : "error-banner"}>
+                      {locationsStatus}
+                    </div>
                   )}
 
-                  {filteredMedia.length > 0 && (
-                    <section className="gallery-subsection">
-                      <div className="section-header">
-                        <div className="section-title">Media</div>
-                      </div>
-                      <div className="grid">
-                        {filteredMedia.map((media) => {
-                          const mediaIndex = mediaItems.indexOf(media);
-                          return (
-                            <ThumbnailCard
-                              key={`${media.formatPath}-${media.name}`}
-                              node={media}
-                              mediaIndex={mediaIndex}
-                              onOpenDirectory={openDirectory}
-                              onOpenMedia={openMedia}
-                              onOpenMediaContextMenu={openMediaContextMenu}
-                            />
-                          );
-                        })}
-                      </div>
-                    </section>
+                  <label className="field">
+                    <span className="field-label">File URI</span>
+                    <input
+                      type="text"
+                      value={locationsFileUri}
+                      onChange={(e) => setLocationsFileUri(e.target.value)}
+                      placeholder="Optional"
+                    />
+                  </label>
+
+                  <button
+                    type="button"
+                    className="primary-button"
+                    onClick={handleLoadLocations}
+                    disabled={isLoadingLocations}
+                  >
+                    {isLoadingLocations ? "Loading…" : "Load"}
+                  </button>
+                </div>
+              </section>
+            ) : (
+              <>
+                {breadcrumbs.length > 0 && (
+                  <nav className="breadcrumbs">
+                    {breadcrumbs.map((crumb, idx) => {
+                      const isLast = idx === breadcrumbs.length - 1;
+                      const isSearchCrumb =
+                        isLast &&
+                        committedSearchTerm.trim().length > 0 &&
+                        crumb.name.startsWith("Search:");
+                      return (
+                        <button
+                          key={crumb.path}
+                          className={`crumb ${isLast ? "active" : ""}`}
+                          onClick={() => handleBreadcrumbClick(crumb.path, isSearchCrumb)}
+                          disabled={isLast}
+                        >
+                          {crumb.name}
+                        </button>
+                      );
+                    })}
+                  </nav>
+                )}
+
+                <section className="gallery-section">
+                  {isLoadingDirectory && (
+                    <div className="loading-state">Loading items…</div>
                   )}
-                </>
-              )}
-            </section>
+                  {!isLoadingDirectory && hasNoItems && (
+                    <div className="empty-state">
+                      <div className="empty-title">No items found</div>
+                      <div className="empty-subtitle">
+                        Try a different search term or navigate to another folder.
+                      </div>
+                    </div>
+                  )}
+                  {!isLoadingDirectory && !hasNoItems && (
+                    <>
+                      {filteredDirectories.length > 0 && (
+                        <section className="gallery-subsection">
+                          <div className="section-header">
+                            <div className="section-title">Directories</div>
+                            {filteredDirectories.length > Math.max(directoriesColumns, 1) && (
+                              <button
+                                type="button"
+                                className="section-toggle"
+                                onClick={() => setIsDirectoriesExpanded((v) => !v)}
+                              >
+                                {isDirectoriesExpanded
+                                  ? "Show less"
+                                  : `Show all (${filteredDirectories.length})`}
+                              </button>
+                            )}
+                          </div>
+                          <div className="grid" ref={directoriesGridRef}>
+                            {(isDirectoriesExpanded
+                              ? filteredDirectories
+                              : filteredDirectories.slice(0, Math.max(directoriesColumns, 1))
+                            ).map((dir) => (
+                              <ThumbnailCard
+                                key={dir.path}
+                                node={dir}
+                                onOpenDirectory={openDirectory}
+                                onOpenMedia={openMedia}
+                                onOpenMediaContextMenu={openMediaContextMenu}
+                              />
+                            ))}
+                          </div>
+                        </section>
+                      )}
+
+                      {filteredMedia.length > 0 && (
+                        <section className="gallery-subsection">
+                          <div className="section-header">
+                            <div className="section-title">Media</div>
+                          </div>
+                          <div className="grid">{groupedMediaGridItems}</div>
+                        </section>
+                      )}
+                    </>
+                  )}
+                </section>
+              </>
+            )}
           </>
         )}
       </main>
