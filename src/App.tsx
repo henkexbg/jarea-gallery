@@ -10,6 +10,7 @@ const ADMIN_LOCATIONS_URL = `${GALLERY_API_BASE_URL}/gallery/admin/db/locations`
 type DirectoryDto = {
   name: string;
   path: string;
+  parentPath?: string;
   image?: MediaDto;
 };
 
@@ -24,6 +25,7 @@ type MediaDto = {
   contentType: string;
   filename: string;
   dateTaken: string;
+  parentPath?: string;
   videoPath?: string;
 };
 
@@ -44,6 +46,7 @@ type DirectoryNode = {
   kind: "directory";
   name: string;
   path: string;
+  parentPath?: string;
   thumbUrl?: string;
 };
 
@@ -56,6 +59,7 @@ type MediaNode = {
   formatPath: string;
   contentType: string;
   dateTaken: string;
+  parentPath?: string;
   videoPath?: string;
 };
 
@@ -70,9 +74,10 @@ type ContextMenuState =
   | {
       x: number;
       y: number;
-      downloadUrl: string;
-      filename: string;
-      label: string;
+      goToDirectoryPath?: string;
+      downloadUrl?: string;
+      filename?: string;
+      label?: string;
     };
 
 const isDirectory = (node: GalleryNode): node is DirectoryNode => node.kind === "directory";
@@ -97,7 +102,7 @@ type ThumbnailCardProps = {
   mediaIndex?: number;
   onOpenDirectory: (dir: DirectoryNode) => void;
   onOpenMedia: (mediaIndex: number) => void;
-  onOpenMediaContextMenu: (event: React.MouseEvent | React.TouchEvent, media: MediaNode) => void;
+  onOpenNodeContextMenu: (event: React.MouseEvent | React.TouchEvent, node: GalleryNode) => void;
 };
 
 const ThumbnailCard: React.FC<ThumbnailCardProps> = ({
@@ -105,14 +110,15 @@ const ThumbnailCard: React.FC<ThumbnailCardProps> = ({
   mediaIndex,
   onOpenDirectory,
   onOpenMedia,
-  onOpenMediaContextMenu
+  onOpenNodeContextMenu
 }) => {
   if (isDirectory(node)) {
     const hasDirectoryThumb = typeof node.thumbUrl === "string" && node.thumbUrl.length > 0;
     return (
       <button
         className={hasDirectoryThumb ? "thumb-card" : "thumb-card directory"}
-        onClick={() => onOpenDirectory(node)}>
+        onClick={() => onOpenDirectory(node)}
+        onContextMenu={(e) => onOpenNodeContextMenu(e, node)}>
         {hasDirectoryThumb ? (
           <div className="thumb-media">
             <img src={node.thumbUrl} alt={node.name} loading="lazy" className="thumb-image" />
@@ -146,7 +152,7 @@ const ThumbnailCard: React.FC<ThumbnailCardProps> = ({
   const handleTouchStart: React.TouchEventHandler = (e) => {
     clearLongPress();
     longPressTimerRef.current = window.setTimeout(() => {
-      onOpenMediaContextMenu(e, node);
+      onOpenNodeContextMenu(e, node);
     }, 600);
   };
 
@@ -162,7 +168,7 @@ const ThumbnailCard: React.FC<ThumbnailCardProps> = ({
     <button
       className="thumb-card"
       onClick={handleOpen}
-      onContextMenu={(e) => onOpenMediaContextMenu(e, node)}
+      onContextMenu={(e) => onOpenNodeContextMenu(e, node)}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onTouchMove={handleTouchMove}
@@ -583,23 +589,27 @@ export const App: React.FC = () => {
     window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
   };
 
-  const openMediaContextMenu = (
+  const openNodeContextMenu = (
     event: React.MouseEvent | React.TouchEvent,
-    media: MediaNode
+    node: GalleryNode
   ) => {
     event.preventDefault();
     event.stopPropagation();
 
-    const resolved = resolveDownloadUrlForMedia(media);
+    const goToDirectoryPath =
+      isDirectory(node) ? node.parentPath : isMedia(node) ? node.parentPath : undefined;
+
+    const resolved = isMedia(node) ? resolveDownloadUrlForMedia(node) : null;
 
     if ("touches" in event && event.touches.length > 0) {
       const touch = event.touches[0];
       setContextMenu({
         x: touch.clientX,
         y: touch.clientY,
-        downloadUrl: resolved.url,
-        filename: resolved.filename,
-        label: resolved.label
+        goToDirectoryPath,
+        downloadUrl: resolved?.url,
+        filename: resolved?.filename,
+        label: resolved?.label
       });
       return;
     }
@@ -608,9 +618,10 @@ export const App: React.FC = () => {
     setContextMenu({
       x: mouseEvent.clientX,
       y: mouseEvent.clientY,
-      downloadUrl: resolved.url,
-      filename: resolved.filename,
-      label: resolved.label
+      goToDirectoryPath,
+      downloadUrl: resolved?.url,
+      filename: resolved?.filename,
+      label: resolved?.label
     });
   };
 
@@ -636,6 +647,7 @@ export const App: React.FC = () => {
         kind: "directory",
         name: dir.name,
         path: dir.path,
+        parentPath: typeof dir.parentPath === "string" ? dir.parentPath : undefined,
         thumbUrl:
           typeof dir.image?.formatPath === "string"
             ? `${GALLERY_API_BASE_URL}${dir.image.formatPath.replace("{imageFormat}", thumbCode)}`
@@ -665,6 +677,7 @@ export const App: React.FC = () => {
           formatPath: item.formatPath,
           contentType: item.contentType,
           dateTaken: item.dateTaken,
+          parentPath: typeof item.parentPath === "string" ? item.parentPath : undefined,
           videoPath: item.videoPath
         };
       });
@@ -853,13 +866,13 @@ export const App: React.FC = () => {
           mediaIndex={mediaIndex}
           onOpenDirectory={openDirectory}
           onOpenMedia={openMedia}
-          onOpenMediaContextMenu={openMediaContextMenu}
+          onOpenNodeContextMenu={openNodeContextMenu}
         />
       );
     }
 
     return nodes;
-  }, [filteredMedia, mediaItems, openDirectory, openMedia, openMediaContextMenu]);
+  }, [filteredMedia, mediaItems, openDirectory, openMedia, openNodeContextMenu]);
 
   const breadcrumbs = useMemo(() => {
     const segments: { name: string; path: string }[] = [];
@@ -1201,7 +1214,7 @@ export const App: React.FC = () => {
                                 node={dir}
                                 onOpenDirectory={openDirectory}
                                 onOpenMedia={openMedia}
-                                onOpenMediaContextMenu={openMediaContextMenu}
+                                onOpenNodeContextMenu={openNodeContextMenu}
                               />
                             ))}
                           </div>
@@ -1232,39 +1245,67 @@ export const App: React.FC = () => {
           role="menu"
           onPointerDown={(e) => e.stopPropagation()}
         >
-          <button
-            type="button"
-            className="context-menu-item"
-            role="menuitem"
-            onClick={async () => {
-              try {
-                await triggerDownload(contextMenu.downloadUrl, contextMenu.filename);
-              } catch (error) {
-                const message = error instanceof Error ? error.message : "Unknown error";
-                setDirectoryError(message);
-              } finally {
-                closeContextMenu();
-              }
-            }}
-          >
-            {contextMenu.label}
-          </button>
+          {typeof contextMenu.goToDirectoryPath === "string" &&
+            contextMenu.goToDirectoryPath.length > 0 && (
+              <button
+                type="button"
+                className="context-menu-item"
+                role="menuitem"
+                onClick={() => {
+                  try {
+                    const params = new URLSearchParams(location.search);
+                    params.delete("carousel");
+                    params.delete("searchTerm");
+                    navigate({
+                      pathname: contextMenu.goToDirectoryPath!,
+                      search: params.toString()
+                    });
+                  } finally {
+                    closeContextMenu();
+                  }
+                }}
+              >
+                Go to parent directory
+              </button>
+            )}
+
+          {typeof contextMenu.downloadUrl === "string" &&
+            contextMenu.downloadUrl.length > 0 &&
+            typeof contextMenu.filename === "string" &&
+            typeof contextMenu.label === "string" && (
+              <button
+                type="button"
+                className="context-menu-item"
+                role="menuitem"
+                onClick={async () => {
+                  try {
+                    await triggerDownload(contextMenu.downloadUrl!, contextMenu.filename!);
+                  } catch (error) {
+                    const message = error instanceof Error ? error.message : "Unknown error";
+                    setDirectoryError(message);
+                  } finally {
+                    closeContextMenu();
+                  }
+                }}
+              >
+                {contextMenu.label}
+              </button>
+            )}
         </div>
       )}
 
-      {view === "gallery" && carouselIndex !== null && (
+      {typeof carouselIndex === "number" && (
         <CarouselModal
-          items={mediaItems}
+          items={filteredMedia}
           currentIndex={carouselIndex}
           imageFormats={imageFormats}
           videoFormats={videoFormats}
           selectedVideoFormat={selectedVideoFormat}
           onClose={closeCarousel}
           onChangeIndex={(index) => setCarouselParam(index, true)}
-          onOpenMediaContextMenu={openMediaContextMenu}
+          onOpenMediaContextMenu={(event, media) => openNodeContextMenu(event, media)}
         />
       )}
     </div>
   );
 };
-
