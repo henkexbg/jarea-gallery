@@ -24,7 +24,7 @@ type MediaDto = {
   formatPath: string;
   contentType: string;
   filename: string;
-  dateTaken: string;
+  dateTaken?: string;
   parentPath?: string;
   videoPath?: string;
 };
@@ -58,7 +58,7 @@ type MediaNode = {
   thumbUrl: string;
   formatPath: string;
   contentType: string;
-  dateTaken: string;
+  dateTaken?: string;
   parentPath?: string;
   videoPath?: string;
 };
@@ -659,8 +659,7 @@ export const App: React.FC = () => {
         (item) =>
           typeof item?.contentType === "string" &&
           typeof item?.formatPath === "string" &&
-          typeof item?.filename === "string" &&
-          typeof item?.dateTaken === "string"
+          typeof item?.filename === "string"
       )
       .map((item) => {
         const isVideo = item.contentType.startsWith("video/");
@@ -829,13 +828,15 @@ export const App: React.FC = () => {
       year: "numeric"
     });
 
-    const getMonthKey = (dateTaken: string) => {
+    const getMonthKey = (dateTaken?: string) => {
+      if (!dateTaken) return null;
       const d = new Date(dateTaken);
       if (!Number.isFinite(d.getTime())) return null;
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
     };
 
-    const getMonthLabel = (dateTaken: string) => {
+    const getMonthLabel = (dateTaken?: string) => {
+      if (!dateTaken) return null;
       const d = new Date(dateTaken);
       if (!Number.isFinite(d.getTime())) return null;
       return formatter.format(d);

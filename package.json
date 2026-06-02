@@ -27,6 +27,6 @@
     "typescript": "^5.7.2",
     "vite": "^5.4.0"
   },
-  "gallery_api_version": "2.1.0"
+  "gallery_api_version": "2.3.0"
 }
 
